@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless Inventory API - AWS SAM
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    MemorySize: 256
+    Timeout: 10
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Env
+        APP_VERSION: !Ref AppVersion
+
+Parameters:
+  Env:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+  AppVersion:
+    Type: String
+    Default: "1.0.0"
+
+Resources:
+  # Lambda functions and DynamoDB tables will be added in Phase 6
+  Placeholder:
+    Type: AWS::CloudFormation::WaitConditionHandle
+
+Outputs:
+  Environment:
+    Value: !Ref Env
