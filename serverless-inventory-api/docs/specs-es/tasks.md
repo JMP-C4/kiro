@@ -36,7 +36,7 @@ Proyecto completo organizado en dos partes:
   - Crear `ValidationError.js` (HTTP 400, código `VALIDATION_ERROR`)
   - Crear `ConflictError.js` (HTTP 409, código `CONFLICT`)
 
-- [ ] 1.4 Implementar utilidades compartidas — Infraestructura y middleware
+- [x] 1.4 Implementar utilidades compartidas — Infraestructura y middleware
   - Crear `src/shared/domain/value-objects/UniqueId.js` usando `uuid` v4
   - Crear `src/shared/infrastructure/DynamoDBClient.js` como singleton con `DynamoDBDocumentClient`
   - Crear `src/shared/infrastructure/ResponseBuilder.js` con métodos `ok`, `created`, `noContent`, `error`
@@ -51,17 +51,17 @@ Proyecto completo organizado en dos partes:
 
 ## Fase 2 — Core Domain: Entidades y Ports
 
-- [ ] 2.1 Implementar entidad de dominio `Producto`
+- [x] 2.1 Implementar entidad de dominio `Producto`
 - [ ]* 2.2 Escribir tests unitarios para entidad `Producto`
 - [ ]* 2.3 Escribir test de propiedad P-05 (parcial) — Rechazo de entradas inválidas
-- [ ] 2.4 Implementar entidad de dominio `Cliente`
+- [x] 2.4 Implementar entidad de dominio `Cliente`
 - [ ]* 2.5 Escribir tests unitarios para entidad `Cliente`
-- [ ] 2.6 Implementar entidades de dominio `Cobro` y `Credito`
+- [x] 2.6 Implementar entidades de dominio `Cobro` y `Credito`
 - [ ]* 2.7 Escribir tests unitarios para `Cobro` y `Credito`
 - [ ]* 2.8 Escribir test de propiedad P-13 — Saldo de crédito nunca negativo
-- [ ] 2.9 Implementar entidades de dominio POS: `SesionDeCaja`, `Venta` y `Ticket`
+- [x] 2.9 Implementar entidades de dominio POS: `SesionDeCaja`, `Venta` y `Ticket`
 - [ ]* 2.10 Escribir tests unitarios para entidades POS
-- [ ] 2.11 Implementar interfaces (Ports) de todos los módulos
+- [x] 2.11 Implementar interfaces (Ports) de todos los módulos
 - [ ] 2.12 Checkpoint — Verificar dominio y ports
 
 ---
@@ -318,3 +318,145 @@ Proyecto completo organizado en dos partes:
 - Tareas con `[x]` están completadas y verificadas
 - Los tests PBT del backend validan las 22 propiedades de corrección del diseño
 - El frontend cubre los puntos 1–34 del Parcial Práctico y el Workshop SDD completo
+
+
+---
+
+# Frontend POS — Plan de Implementación
+
+> Cubre los requisitos del **Workshop SDD con Kiro AWS** y el **Parcial Práctico de Frontend**.
+> Consume la Serverless Inventory API construida en las fases anteriores.
+>
+> **Stack:** React 18 · TypeScript · Vite · Tailwind CSS · React Query · Axios
+>
+> | Nivel | Nota | Alcance |
+> |-------|------|---------|
+> | Básico | 3.0 | Fases FE-1 y FE-2 (login + listado de productos) |
+> | Intermedio | 4.0 | Fases FE-1, FE-2 y FE-3 (+ CRUD completo) |
+> | Avanzado | 5.0 | Todas las fases (+ POS + stats + paginación) |
+> | Bonificación | +0.5 | Estilos Tailwind coherentes, spinners, componentes reutilizables |
+
+---
+
+## Fase FE-1 — Setup y Autenticación (Básico)
+
+- [ ] FE-1.1 Inicializar proyecto con Vite + React + TypeScript
+  - Ejecutar `npm create vite@latest pos-frontend -- --template react-ts`
+  - Instalar: `axios`, `react-router-dom`, `@tanstack/react-query`, `react-hook-form`, `zod`, `recharts`
+  - Configurar Tailwind CSS y variable de entorno `VITE_API_URL`
+
+- [ ] FE-1.2 Implementar cliente HTTP con interceptores JWT
+  - Crear `src/api/client.ts` con instancia Axios
+  - Interceptor de request: inyecta `Authorization: Bearer <token>` desde `localStorage`
+  - Interceptor de response: captura 401 → elimina token → redirige a `/login`
+
+- [ ] FE-1.3 Implementar AuthContext y hook useAuth
+  - `login()` consume `POST /auth`, almacena token en `localStorage`
+  - `logout()` elimina token y redirige a `/login`
+
+- [ ] FE-1.4 Implementar pantalla de Login
+  - Formulario con campos `usuario`, `contraseña` y botón `"Iniciar sesión"`
+  - Mostrar error si backend retorna 401 o 403
+  - Spinner en botón mientras la petición está en curso
+  - Redirigir a `/productos` tras login exitoso
+
+- [ ] FE-1.5 Implementar ProtectedRoute y Router principal
+  - `ProtectedRoute` redirige a `/login` si no hay token
+  - Redirigir `/login` → `/productos` si ya está autenticado
+
+---
+
+## Fase FE-2 — Layout y Listado de Productos (Básico)
+
+- [ ] FE-2.1 Implementar layout principal con navegación
+  - Sidebar con links: Productos, Clientes, Cobros, Créditos, POS, Stats
+  - Header con nombre del usuario y botón `"Cerrar sesión"`
+  - Componentes UI base: `Button`, `Input`, `Spinner`, `Table`
+
+- [ ] FE-2.2 Implementar API y hook de Productos
+  - `src/api/productos.api.ts` con `getProductos`, `createProducto`, `updateProducto`, `deleteProducto`
+  - `src/hooks/useProductos.ts` con React Query
+
+- [ ] FE-2.3 Implementar página de Productos — Listado
+  - Tabla con: `nombre`, `categoria`, `precio`, `stock`
+  - Skeleton loader mientras carga
+  - Mensaje `"No se encontraron productos"` si lista vacía
+
+- [ ] FE-2.4 Implementar búsqueda y filtro por categoría
+  - Campo de búsqueda por nombre
+  - Select de categoría → `GET /productos?categoria={valor}`
+  - Filtros combinables simultáneamente
+
+- [ ] FE-2.5 Implementar paginación
+  - Controles `"Anterior"` / `"Siguiente"` y números de página
+  - Query params `page` y `limit`
+  - Mostrar `"Página {n} de {total} — {count} productos"`
+
+---
+
+## Fase FE-3 — CRUD Completo (Intermedio)
+
+- [ ] FE-3.1 Implementar formulario de Producto (crear/editar)
+  - React Hook Form + Zod: `nombre`, `categoria`, `precio > 0`, `stock >= 0`
+  - Mensajes de validación junto a cada campo inválido
+
+- [ ] FE-3.2 Implementar crear y editar Producto
+  - Modal con `ProductoForm` para crear y editar
+  - Actualizar lista automáticamente (React Query invalidation)
+  - Toast de éxito/error
+
+- [ ] FE-3.3 Implementar eliminar Producto
+  - Confirmación antes de eliminar
+  - Remover de lista sin recargar
+
+- [ ] FE-3.4 Implementar CRUD de Clientes
+  - Tabla, búsqueda local, formulario con validación de email
+  - Manejar error 409 (email duplicado)
+
+- [ ] FE-3.5 Implementar Cobros
+  - Historial de cobros y formulario de nuevo cobro
+  - Manejar error 409 de stock insuficiente
+
+- [ ] FE-3.6 Implementar Créditos
+  - Saldo de crédito en perfil del cliente
+  - Formulario con validación de monto > 0
+
+---
+
+## Fase FE-4 — Módulo POS (Avanzado)
+
+- [ ] FE-4.1 Implementar CartContext y lógica del carrito
+  - Estado: `items`, `clienteId`, `sesionId`, `metodoPago`
+  - Calcular en tiempo real: `subtotal`, `creditoAplicado`, `total`
+
+- [ ] FE-4.2 Implementar apertura de sesión de caja
+  - Formulario de `montoInicial` → `POST /pos/sesiones`
+
+- [ ] FE-4.3 Implementar pantalla de venta (carrito)
+  - Buscador de productos, lista del carrito, totales en tiempo real
+  - Selector de método de pago: Efectivo, Tarjeta, Crédito
+
+- [ ] FE-4.4 Implementar checkout y generación de ticket
+  - `POST /pos/ventas` → manejar error 409 de stock
+  - Ticket con todos los campos + botón `"Imprimir"` (`window.print()`)
+
+- [ ] FE-4.5 Implementar cierre de sesión de caja e historial
+  - `PUT /pos/sesiones/{sesionId}/cerrar`
+  - Historial de ventas de la sesión
+
+---
+
+## Fase FE-5 — Dashboard, Validaciones y Pulido (Avanzado)
+
+- [ ] FE-5.1 Implementar Dashboard de Estadísticas
+  - `GET /stats` → gráfico de barras con Recharts para `distribucionPorCategoria`
+  - Lista de alerta para `productosConStockBajo`
+
+- [ ] FE-5.2 Implementar sistema de notificaciones Toast
+
+- [ ] FE-5.3 Implementar manejo global de errores
+  - Errores de red, errores 500, skeleton loaders en todas las secciones
+
+- [ ] FE-5.4 Pulido final y responsive
+  - Verificar en pantallas 1024px+
+  - Flujo completo: login → productos → POS → ticket → logout

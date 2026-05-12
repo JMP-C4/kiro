@@ -36,7 +36,7 @@ Complete project organized in two parts:
   - Create `ValidationError.js` (HTTP 400, code `VALIDATION_ERROR`)
   - Create `ConflictError.js` (HTTP 409, code `CONFLICT`)
 
-- [ ] 1.4 Implement shared utilities — Infrastructure and middleware
+- [x] 1.4 Implement shared utilities — Infrastructure and middleware
   - Create `src/shared/domain/value-objects/UniqueId.js` using `uuid` v4
   - Create `src/shared/infrastructure/DynamoDBClient.js` as singleton
   - Create `src/shared/infrastructure/ResponseBuilder.js` with `ok`, `created`, `noContent`, `error` methods
@@ -318,3 +318,62 @@ Complete project organized in two parts:
 - Tasks with `[x]` are completed and verified
 - Backend PBT tests validate all 22 correctness properties from the design
 - Frontend covers exam points 1–34 and the complete SDD Workshop
+
+
+---
+
+# POS Frontend — Implementation Plan
+
+> Covers the **SDD Workshop with Kiro AWS** and the **Frontend Practical Exam** requirements.
+> Consumes the Serverless Inventory API built in the previous phases.
+>
+> **Stack:** React 18 · TypeScript · Vite · Tailwind CSS · React Query · Axios
+>
+> | Level | Grade | Scope |
+> |-------|-------|-------|
+> | Basic | 3.0 | Phases FE-1 and FE-2 (login + product listing) |
+> | Intermediate | 4.0 | Phases FE-1, FE-2 and FE-3 (+ full CRUD) |
+> | Advanced | 5.0 | All phases (+ POS + stats + pagination) |
+> | Bonus | +0.5 | Consistent Tailwind styles, spinners, reusable components |
+
+---
+
+## Phase FE-1 — Setup and Authentication (Basic)
+
+- [ ] FE-1.1 Initialize project with Vite + React + TypeScript
+- [ ] FE-1.2 Implement HTTP client with JWT interceptors
+- [ ] FE-1.3 Implement AuthContext and useAuth hook
+- [ ] FE-1.4 Implement Login screen
+- [ ] FE-1.5 Implement ProtectedRoute and main Router
+
+## Phase FE-2 — Layout and Product Listing (Basic)
+
+- [ ] FE-2.1 Implement main layout with navigation
+- [ ] FE-2.2 Implement Products API and hook
+- [ ] FE-2.3 Implement Products page — Listing
+- [ ] FE-2.4 Implement search and category filter
+- [ ] FE-2.5 Implement pagination
+
+## Phase FE-3 — Full CRUD (Intermediate)
+
+- [ ] FE-3.1 Implement Product form (create/edit) with React Hook Form + Zod
+- [ ] FE-3.2 Implement create and edit Product
+- [ ] FE-3.3 Implement delete Product
+- [ ] FE-3.4 Implement Customers CRUD
+- [ ] FE-3.5 Implement Charges
+- [ ] FE-3.6 Implement Credits
+
+## Phase FE-4 — POS Module (Advanced)
+
+- [ ] FE-4.1 Implement CartContext and cart logic
+- [ ] FE-4.2 Implement cash session opening
+- [ ] FE-4.3 Implement sale screen (cart)
+- [ ] FE-4.4 Implement checkout and ticket generation
+- [ ] FE-4.5 Implement cash session closing and history
+
+## Phase FE-5 — Dashboard, Validations and Polish (Advanced)
+
+- [ ] FE-5.1 Implement Statistics Dashboard
+- [ ] FE-5.2 Implement Toast notification system
+- [ ] FE-5.3 Implement global error handling
+- [ ] FE-5.4 Final polish and responsive
