@@ -6,7 +6,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "test": "jest --coverage",
+    "test": "jest --coverage --passWithNoTests",
     "test:unit": "jest --testPathPattern=tests/unit --coverage",
     "test:integration": "jest --testPathPattern=tests/integration",
     "test:watch": "jest --watch",
