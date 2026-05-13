@@ -4,6 +4,10 @@ import type { AuthContextType, AuthUser, LoginCredentials } from '../types/auth.
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
+// Credenciales de demo para desarrollo sin backend
+const DEV_CREDENTIALS = { usuario: 'admin', contrasena: 'admin123' }
+const DEV_TOKEN = 'dev-token-local'
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -18,9 +22,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = async (credentials: LoginCredentials) => {
-    const data = await authApi.login(credentials)
-    localStorage.setItem('access_token', data.access_token)
-    setUser({ token: data.access_token })
+    // Modo demo: si el backend no responde, usar credenciales locales
+    const isDevLogin =
+      credentials.usuario === DEV_CREDENTIALS.usuario &&
+      credentials.contrasena === DEV_CREDENTIALS.contrasena
+
+    try {
+      const data = await authApi.login(credentials)
+      localStorage.setItem('access_token', data.access_token)
+      setUser({ token: data.access_token })
+    } catch (error) {
+      // Si el backend no está disponible y son credenciales demo, permitir acceso
+      if (isDevLogin) {
+        localStorage.setItem('access_token', DEV_TOKEN)
+        setUser({ token: DEV_TOKEN })
+        return
+      }
+      throw error
+    }
   }
 
   const logout = () => {

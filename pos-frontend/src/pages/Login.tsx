@@ -170,7 +170,14 @@ export function Login() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
+        {/* Hint de credenciales demo */}
+        <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-700">
+          <p className="font-semibold mb-1">🔧 Modo desarrollo</p>
+          <p>Sin backend activo, usa estas credenciales:</p>
+          <p className="mt-1 font-mono">Usuario: <strong>admin</strong> · Contraseña: <strong>admin123</strong></p>
+        </div>
+
+        <p className="text-center text-xs text-gray-400 mt-4">
           POS Inventory System · v1.0.0
         </p>
       </div>
