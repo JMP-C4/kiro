@@ -1,71 +1,86 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
-import { authApi } from '../api/auth.api'
-import type { AuthContextType, AuthUser, LoginCredentials } from '../types/auth.types'
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  type ReactNode,
+} from 'react'
+import type { Rol } from '../types/auth.types'
 
-const AuthContext = createContext<AuthContextType | null>(null)
+const TOKEN_KEY = 'token'
 
-// Credenciales de demo para desarrollo sin backend
-const DEV_CREDENTIALS = { usuario: 'admin', contrasena: 'admin123' }
-const DEV_TOKEN = 'dev-token-local'
+interface AuthContextValue {
+  token: string | null
+  rol: Rol | null
+  nombre: string | null
+  login: (token: string, rol: string, nombre: string) => void
+  logout: () => void
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null)
+
+/**
+ * Decode the `rol` and `nombre` fields from a JWT payload.
+ * The backend embeds these as custom claims in the token.
+ * Returns null values if the token is malformed or missing claims.
+ */
+function decodeJwtPayload(token: string): { rol: string | null; nombre: string | null } {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return { rol: null, nombre: null }
+    // Base64url → Base64 → JSON
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return {
+      rol: payload.rol ?? null,
+      nombre: payload.nombre ?? null,
+    }
+  } catch {
+    return { rol: null, nombre: null }
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [token, setToken] = useState<string | null>(null)
+  const [rol, setRol] = useState<Rol | null>(null)
+  const [nombre, setNombre] = useState<string | null>(null)
 
-  // Restaurar sesión desde localStorage al cargar la app
+  // On mount: restore session from localStorage
   useEffect(() => {
-    const token = localStorage.getItem('access_token')
-    if (token) {
-      setUser({ token })
+    const storedToken = localStorage.getItem(TOKEN_KEY)
+    if (storedToken) {
+      const { rol: decodedRol, nombre: decodedNombre } = decodeJwtPayload(storedToken)
+      setToken(storedToken)
+      setRol((decodedRol as Rol) ?? null)
+      setNombre(decodedNombre)
     }
-    setIsLoading(false)
   }, [])
 
-  const login = async (credentials: LoginCredentials) => {
-    // Modo demo: si el backend no responde, usar credenciales locales
-    const isDevLogin =
-      credentials.usuario === DEV_CREDENTIALS.usuario &&
-      credentials.contrasena === DEV_CREDENTIALS.contrasena
+  const login = useCallback((newToken: string, newRol: string, newNombre: string) => {
+    localStorage.setItem(TOKEN_KEY, newToken)
+    setToken(newToken)
+    setRol(newRol as Rol)
+    setNombre(newNombre)
+  }, [])
 
-    try {
-      const data = await authApi.login(credentials)
-      localStorage.setItem('access_token', data.access_token)
-      setUser({ token: data.access_token })
-    } catch (error) {
-      // Si el backend no está disponible y son credenciales demo, permitir acceso
-      if (isDevLogin) {
-        localStorage.setItem('access_token', DEV_TOKEN)
-        setUser({ token: DEV_TOKEN })
-        return
-      }
-      throw error
-    }
-  }
-
-  const logout = () => {
-    localStorage.removeItem('access_token')
-    setUser(null)
-  }
+  const logout = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY)
+    setToken(null)
+    setRol(null)
+    setNombre(null)
+  }, [])
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{ token, rol, nombre, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
-export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth debe usarse dentro de AuthProvider')
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext)
+  if (!ctx) {
+    throw new Error('useAuth must be used inside <AuthProvider>')
   }
-  return context
+  return ctx
 }

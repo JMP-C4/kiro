@@ -1,24 +1,20 @@
 export interface Producto {
-  id: string
+  id: number
+  codigo: string
   nombre: string
-  categoria: string
-  precio: number
-  stock: number
-  activo: boolean
-  fechaCreacion: string
-}
-
-export interface ProductosFilters {
+  descripcion?: string
   categoria?: string
-  nombre?: string
-  page?: number
-  limit?: number
+  precio: number
+  incluye_iva: boolean
+  unidad_medida: string  // 'und' | 'kg' | 'g' | 'lb'
+  activo: boolean
 }
 
-export interface ProductosPaginados {
-  items: Producto[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
+export interface ProductoSearchResult {
+  id: number
+  codigo: string
+  nombre: string
+  precio: number
+  incluye_iva: boolean
+  unidad_medida: string
 }

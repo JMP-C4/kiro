@@ -1,18 +1,48 @@
 @import "tailwindcss";
 
-@theme {
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
-  --color-primary-400: #60a5fa;
-}
+@layer components {
+  .glass {
+    background: rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
 
-@layer base {
-  body {
-    background-color: #f9fafb;
-    color: #111827;
-    -webkit-font-smoothing: antialiased;
+  .glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 1rem;
+  }
+
+  .glass-input {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.20);
+  }
+
+  .glass-modal {
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  /* Spinner — loading.html */
+  .spinner {
+    border: 4px dashed rgba(139, 92, 246, 0.8);
+    border-radius: 9999px;
+    animation: spin 1s linear infinite;
   }
 }
+
+/* Estilos de impresión del ticket */
+@media print {
+  body > *:not(#ticket-print) { display: none !important; }
+  #ticket-print { display: block !important; }
+}
+
+/* Formato 80mm */
+.print-80mm { width: 80mm; font-family: monospace; font-size: 10pt; }
+/* Formato 58mm */
+.print-58mm { width: 58mm; font-family: monospace; font-size: 8pt; }
+/* Formato carta */
+.print-carta { width: 216mm; margin: 2cm; }

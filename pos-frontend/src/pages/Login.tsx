@@ -1,185 +1,209 @@
 import { useState } from 'react'
-import { useNavigate, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import axios from 'axios'
+import { loginApi } from '../api/auth.api'
 
+// ---------------------------------------------------------------------------
+// Demo credentials for quick access during development
+// ---------------------------------------------------------------------------
+const DEMO_USERS = [
+  { label: 'Admin', username: 'admin', password: 'admin123', color: 'from-violet-600 to-purple-600' },
+  { label: 'Supervisor', username: 'supervisor', password: 'super123', color: 'from-blue-600 to-cyan-600' },
+  { label: 'Cajero', username: 'cajero', password: 'cajero123', color: 'from-emerald-600 to-teal-600' },
+]
+
+// Zod schema — both fields required, min 1 char
 const loginSchema = z.object({
-  usuario: z.string().min(1, 'El usuario es obligatorio'),
-  contrasena: z.string().min(1, 'La contraseña es obligatoria'),
+  username: z.string().min(1, 'El usuario es obligatorio'),
+  password: z.string().min(1, 'La contraseña es obligatoria'),
 })
 
 type LoginFormData = z.infer<typeof loginSchema>
 
-export function Login() {
-  const { login, isAuthenticated } = useAuth()
+function getErrorMessage(status: number | undefined): string {
+  if (status === 401) return 'Credenciales inválidas. Verifica tu usuario y contraseña.'
+  if (status === 403) return 'Usuario inactivo. Contacta al administrador.'
+  return 'Error al conectar con el servidor.'
+}
+
+export default function Login() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [serverError, setServerError] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   })
 
-  // Si ya está autenticado, redirigir a productos
-  if (isAuthenticated) {
-    return <Navigate to="/productos" replace />
+  // Fill form with demo credentials
+  const fillDemo = (username: string, password: string) => {
+    setValue('username', username, { shouldValidate: true })
+    setValue('password', password, { shouldValidate: true })
+    setServerError(null)
   }
 
   const onSubmit = async (data: LoginFormData) => {
     setServerError(null)
     try {
-      await login({ usuario: data.usuario, contrasena: data.contrasena })
-      navigate('/productos', { replace: true })
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          setServerError('Credenciales incorrectas. Verifica tu usuario y contraseña.')
-        } else if (error.response?.status === 403) {
-          setServerError('Usuario inactivo. Contacta al administrador.')
-        } else {
-          setServerError('Error del servidor. Intenta nuevamente.')
-        }
-      } else {
-        setServerError('Sin conexión. Verifica tu red.')
-      }
+      const { token, rol, nombre } = await loginApi(data.username, data.password)
+      login(token, rol, nombre)
+      navigate('/pos')
+    } catch (err: unknown) {
+      // Extract HTTP status from Axios error shape
+      const status =
+        err !== null &&
+        typeof err === 'object' &&
+        'response' in err &&
+        err.response !== null &&
+        typeof err.response === 'object' &&
+        'status' in err.response
+          ? (err.response as { status: number }).status
+          : undefined
+      setServerError(getErrorMessage(status))
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md">
-
-        {/* Logo / Header */}
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="glass-card w-full max-w-md p-8 shadow-2xl">
+        {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-2xl mb-4 shadow-lg">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-linear-to-br from-violet-600 to-purple-600 mb-4 shadow-lg">
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+              />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">POS Inventory</h1>
-          <p className="text-sm text-gray-500 mt-1">Inicia sesión para continuar</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">POS Supermercado</h1>
+          <p className="text-white/60 text-sm mt-1">Inicia sesión para continuar</p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+        {/* Form */}
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          {/* Username field */}
+          <div className="mb-5">
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-white/80 mb-1.5"
+            >
+              Usuario
+            </label>
+            <input
+              id="username"
+              type="text"
+              autoComplete="username"
+              autoFocus
+              className={`glass-input w-full rounded-lg px-4 py-2.5 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-violet-500 transition-all ${
+                errors.username ? 'ring-2 ring-red-500' : ''
+              }`}
+              placeholder="Ingresa tu usuario"
+              {...register('username')}
+            />
+            {errors.username && (
+              <p className="mt-1.5 text-xs text-red-400" role="alert">
+                {errors.username.message}
+              </p>
+            )}
+          </div>
 
-          {/* Error del servidor */}
+          {/* Password field */}
+          <div className="mb-6">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-white/80 mb-1.5"
+            >
+              Contraseña
+            </label>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              className={`glass-input w-full rounded-lg px-4 py-2.5 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-violet-500 transition-all ${
+                errors.password ? 'ring-2 ring-red-500' : ''
+              }`}
+              placeholder="Ingresa tu contraseña"
+              {...register('password')}
+            />
+            {errors.password && (
+              <p className="mt-1.5 text-xs text-red-400" role="alert">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
+
+          {/* Server error alert */}
           {serverError && (
-            <div className="mb-5 flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
-              <svg className="w-5 h-5 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd" />
-              </svg>
-              <span>{serverError}</span>
+            <div
+              className="mb-5 rounded-lg px-4 py-3 bg-red-500/20 border border-red-500/40 text-red-300 text-sm"
+              role="alert"
+              aria-live="assertive"
+            >
+              <span className="font-medium">⚠ </span>
+              {serverError}
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+          {/* Submit button */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-linear-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
+          >
+            {isSubmitting ? (
+              <>
+                <span
+                  className="spinner w-5 h-5 inline-block"
+                  role="status"
+                  aria-label="Cargando"
+                />
+                <span>Iniciando sesión…</span>
+              </>
+            ) : (
+              'Iniciar sesión'
+            )}
+          </button>
+        </form>
 
-            {/* Campo Usuario */}
-            <div>
-              <label htmlFor="usuario" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Usuario
-              </label>
-              <input
-                id="usuario"
-                type="text"
-                autoComplete="username"
-                placeholder="Ingresa tu usuario"
-                {...register('usuario')}
-                className={`w-full px-3.5 py-2.5 rounded-lg border text-sm transition-colors
-                  focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                  ${errors.usuario
-                    ? 'border-red-400 bg-red-50 focus:ring-red-400'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
-              />
-              {errors.usuario && (
-                <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
-                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd" />
-                  </svg>
-                  {errors.usuario.message}
-                </p>
-              )}
-            </div>
-
-            {/* Campo Contraseña */}
-            <div>
-              <label htmlFor="contrasena" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Contraseña
-              </label>
-              <input
-                id="contrasena"
-                type="password"
-                autoComplete="current-password"
-                placeholder="Ingresa tu contraseña"
-                {...register('contrasena')}
-                className={`w-full px-3.5 py-2.5 rounded-lg border text-sm transition-colors
-                  focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                  ${errors.contrasena
-                    ? 'border-red-400 bg-red-50 focus:ring-red-400'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
-              />
-              {errors.contrasena && (
-                <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
-                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd" />
-                  </svg>
-                  {errors.contrasena.message}
-                </p>
-              )}
-            </div>
-
-            {/* Botón Submit */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700
-                disabled:bg-primary-400 disabled:cursor-not-allowed
-                text-white font-medium py-2.5 px-4 rounded-lg text-sm
-                transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Iniciando sesión...
-                </>
-              ) : (
-                'Iniciar sesión'
-              )}
-            </button>
-
-          </form>
+        {/* ── Quick access (dev helper) ─────────────────────────────── */}
+        <div className="mt-6 pt-5 border-t border-white/10">
+          <p className="text-center text-xs text-white/30 mb-3 uppercase tracking-wider">
+            Acceso rápido (demo)
+          </p>
+          <div className="flex gap-2">
+            {DEMO_USERS.map((u) => (
+              <button
+                key={u.username}
+                type="button"
+                onClick={() => fillDemo(u.username, u.password)}
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold text-white bg-linear-to-r ${u.color} opacity-70 hover:opacity-100 transition-opacity`}
+                title={`Usuario: ${u.username} / Contraseña: ${u.password}`}
+              >
+                {u.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-center text-xs text-white/20 mt-2">
+            Haz clic para rellenar las credenciales
+          </p>
         </div>
-
-        {/* Hint de credenciales demo */}
-        <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-700">
-          <p className="font-semibold mb-1">🔧 Modo desarrollo</p>
-          <p>Sin backend activo, usa estas credenciales:</p>
-          <p className="mt-1 font-mono">Usuario: <strong>admin</strong> · Contraseña: <strong>admin123</strong></p>
-        </div>
-
-        <p className="text-center text-xs text-gray-400 mt-4">
-          POS Inventory System · v1.0.0
-        </p>
       </div>
     </div>
   )

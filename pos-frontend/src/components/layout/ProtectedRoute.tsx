@@ -1,25 +1,32 @@
-import { Navigate, useLocation } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import type { Rol } from '../../types/auth.types'
 
 interface ProtectedRouteProps {
-  children: React.ReactNode
+  /** If provided, only users with one of these roles can access the route.
+   *  If omitted, any authenticated user is allowed. */
+  allowedRoles?: Rol[]
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth()
-  const location = useLocation()
+/**
+ * Guards a route behind authentication and optional role checks.
+ *
+ * - No token → redirect to /login  (Req-1, AC 1.5)
+ * - Token present but role not in allowedRoles → redirect to /pos  (Req-7, AC 7.5)
+ * - Otherwise → render nested routes via <Outlet />
+ */
+export default function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
+  const { token, rol } = useAuth()
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600" />
-      </div>
-    )
+  // Not authenticated — send to login
+  if (!token) {
+    return <Navigate to="/login" replace />
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+  // Authenticated but role not permitted — send to POS (safe fallback)
+  if (allowedRoles && rol && !allowedRoles.includes(rol)) {
+    return <Navigate to="/pos" replace />
   }
 
-  return <>{children}</>
+  return <Outlet />
 }

@@ -1,21 +1,18 @@
-export interface LoginCredentials {
-  usuario: string
-  contrasena: string
-}
-
-export interface AuthResponse {
-  access_token: string
-  token_type?: string
-}
+export type Rol = 'CAJERO' | 'SUPERVISOR' | 'ADMIN'
 
 export interface AuthUser {
   token: string
+  rol: Rol
+  nombre: string
 }
 
-export interface AuthContextType {
-  user: AuthUser | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  login: (credentials: LoginCredentials) => Promise<void>
-  logout: () => void
+export interface LoginRequest {
+  username: string
+  password: string
+}
+
+export interface LoginResponse {
+  token: string
+  rol: string
+  nombre: string
 }
