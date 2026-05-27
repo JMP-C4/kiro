@@ -12,9 +12,19 @@ Backend serverless en AWS + Frontend React con autenticación JWT
 
 ## Capturas de pantalla
 
-| Login | Dashboard |
-|-------|-----------|
-| ![Login](docs/screenshots/login.png) | ![Dashboard](docs/screenshots/dashboard.png) |
+Las imágenes viven en [`docs/screenshots/`](docs/screenshots/). En GitHub se muestran con rutas **relativas a la raíz del repo** (por ejemplo `docs/screenshots/login.svg`). Si exportas PNG, súbelos con el mismo nombre y cambia la extensión en las etiquetas de abajo.
+
+<p align="center">
+  <img src="docs/screenshots/login.svg" alt="Pantalla de login" width="420" />
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/dashboard.svg" alt="Dashboard" width="420" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/pos.svg" alt="Punto de venta (POS)" width="860" />
+</p>
+
+<p align="center"><sub>Placeholders SVG incluidos en el repo. Sustituye por <code>login.png</code>, <code>dashboard.png</code> y <code>pos.png</code> si prefieres capturas reales.</sub></p>
 
 ---
 
@@ -31,6 +41,8 @@ Un sistema para que una startup gestione su inventario y realice ventas en caja.
 
 ```
 Kiro/
+├── docs/
+│   └── screenshots/            ← Capturas para el README (SVG/PNG)
 ├── serverless-inventory-api/   ← API REST en AWS (Node.js + Lambda + DynamoDB)
 ├── pos-frontend/               ← Interfaz web (React + TypeScript + Tailwind)
 └── README.md                   ← Este archivo
