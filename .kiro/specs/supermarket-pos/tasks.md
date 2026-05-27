@@ -59,7 +59,7 @@ Implementación incremental de un sistema POS de supermercado con dos proyectos 
   - Crear `Login.tsx` con glassmorphism, campos `usuario` y `contraseña`
   - Validación con Zod: campos obligatorios
   - Mostrar error en 401 (credenciales inválidas) y 403 (usuario inactivo)
-  - Al login exitoso → redirigir directo al POS
+  - Al login exitoso → redirigir al Dashboard (acceso rápido a módulos)
   - _Requisitos: Req-1 (1.1, 1.4, 1.5), RNF-15_
 
 - [x] 2.4 Frontend — ProtectedRoute y Router
@@ -224,7 +224,7 @@ Implementación incremental de un sistema POS de supermercado con dos proyectos 
   - Crear `ProductoForm.tsx` con React Hook Form + Zod
   - _Requisitos: Req-8 (8.7, 8.8)_
 
-- [ ] 7.2 Frontend — Módulo de Usuarios (solo Admin)
+- [x] 7.2 Frontend — Módulo de Usuarios (solo Admin)
   - Crear `Usuarios.tsx` con tabla de usuarios
   - Crear formulario de creación/edición con campos: nombre, apellido, username, contraseña, rol, estado
   - Solo visible para rol ADMIN

@@ -112,7 +112,7 @@ export default function Usuarios() {
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-900 to-slate-900">
       <header className="glass h-14 flex items-center px-6 gap-4 sticky top-0 z-40">
-        <button type="button" onClick={() => navigate('/pos')} className="text-white/60 hover:text-white transition text-sm">← POS</button>
+        <button type="button" onClick={() => navigate('/dashboard')} className="text-white/60 hover:text-white transition text-sm">← Dashboard</button>
         <span className="text-white font-bold text-base flex-1">Usuarios</span>
         {nombre && <span className="text-white/60 text-sm hidden md:block">{nombre} · {rol}</span>}
       </header>

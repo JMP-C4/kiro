@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
 import POS from './pages/POS'
 import Productos from './pages/Productos'
 import Usuarios from './pages/Usuarios'
@@ -9,19 +10,19 @@ import Reportes from './pages/Reportes'
 import Configuracion from './pages/Configuracion'
 
 /**
- * Public-only wrapper: if the user is already authenticated, redirect to /pos.
+ * Public-only wrapper: if the user is already authenticated, redirect to /dashboard.
  * Used for the /login route so logged-in users don't see the login screen.
  */
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth()
-  return token ? <Navigate to="/pos" replace /> : <>{children}</>
+  return token ? <Navigate to="/dashboard" replace /> : <>{children}</>
 }
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public route — redirect to /pos when already logged in */}
+        {/* Public route — redirect to /dashboard when already logged in */}
         <Route
           path="/login"
           element={
@@ -33,6 +34,7 @@ export default function App() {
 
         {/* Protected routes — any authenticated user */}
         <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/pos" element={<POS />} />
         </Route>
 
@@ -49,8 +51,8 @@ export default function App() {
         </Route>
 
         {/* Default redirects */}
-        <Route path="/" element={<Navigate to="/pos" replace />} />
-        <Route path="*" element={<Navigate to="/pos" replace />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   )

@@ -55,7 +55,7 @@ export default function Login() {
     try {
       const { token, rol, nombre } = await loginApi(data.username, data.password)
       login(token, rol, nombre)
-      navigate('/pos')
+      navigate('/dashboard')
     } catch (err: unknown) {
       // Extract HTTP status from Axios error shape
       const status =

@@ -2,7 +2,6 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   useCallback,
   type ReactNode,
 } from 'react'
@@ -29,8 +28,11 @@ function decodeJwtPayload(token: string): { rol: string | null; nombre: string |
   try {
     const parts = token.split('.')
     if (parts.length !== 3) return { rol: null, nombre: null }
-    // Base64url → Base64 → JSON
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
+    // Base64url → Base64 → JSON (with padding for atob)
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const pad = base64.length % 4
+    if (pad) base64 += '='.repeat(4 - pad)
+    const payload = JSON.parse(atob(base64))
     return {
       rol: payload.rol ?? null,
       nombre: payload.nombre ?? null,
@@ -40,38 +42,32 @@ function decodeJwtPayload(token: string): { rol: string | null; nombre: string |
   }
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(null)
-  const [rol, setRol] = useState<Rol | null>(null)
-  const [nombre, setNombre] = useState<string | null>(null)
+function readStoredSession(): { token: string | null; rol: Rol | null; nombre: string | null } {
+  const storedToken = localStorage.getItem(TOKEN_KEY)
+  if (!storedToken) return { token: null, rol: null, nombre: null }
+  const { rol: decodedRol, nombre: decodedNombre } = decodeJwtPayload(storedToken)
+  return {
+    token: storedToken,
+    rol: (decodedRol as Rol) ?? null,
+    nombre: decodedNombre,
+  }
+}
 
-  // On mount: restore session from localStorage
-  useEffect(() => {
-    const storedToken = localStorage.getItem(TOKEN_KEY)
-    if (storedToken) {
-      const { rol: decodedRol, nombre: decodedNombre } = decodeJwtPayload(storedToken)
-      setToken(storedToken)
-      setRol((decodedRol as Rol) ?? null)
-      setNombre(decodedNombre)
-    }
-  }, [])
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState(readStoredSession)
 
   const login = useCallback((newToken: string, newRol: string, newNombre: string) => {
     localStorage.setItem(TOKEN_KEY, newToken)
-    setToken(newToken)
-    setRol(newRol as Rol)
-    setNombre(newNombre)
+    setSession({ token: newToken, rol: newRol as Rol, nombre: newNombre })
   }, [])
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
-    setToken(null)
-    setRol(null)
-    setNombre(null)
+    setSession({ token: null, rol: null, nombre: null })
   }, [])
 
   return (
-    <AuthContext.Provider value={{ token, rol, nombre, login, logout }}>
+    <AuthContext.Provider value={{ ...session, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

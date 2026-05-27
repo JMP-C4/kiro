@@ -97,11 +97,11 @@ export default function Productos() {
       <header className="glass h-14 flex items-center px-6 gap-4 sticky top-0 z-40">
         <button
           type="button"
-          onClick={() => navigate('/pos')}
+          onClick={() => navigate('/dashboard')}
           className="text-white/60 hover:text-white transition text-sm flex items-center gap-1"
-          aria-label="Volver al POS"
+          aria-label="Volver al dashboard"
         >
-          ← POS
+          ← Dashboard
         </button>
         <span className="text-white font-bold text-base flex-1">Productos</span>
         {nombre && <span className="text-white/60 text-sm hidden md:block">{nombre} · {rol}</span>}

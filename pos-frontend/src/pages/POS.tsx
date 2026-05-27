@@ -300,6 +300,14 @@ export default function POS() {
 
       {/* ── Top Navbar ─────────────────────────────────────────────────── */}
       <header className="glass h-14 flex items-center px-4 gap-4 sticky top-0 z-40">
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard')}
+          className="text-white/60 hover:text-white transition text-sm shrink-0"
+          aria-label="Volver al dashboard"
+        >
+          ←
+        </button>
         <span className="text-white font-bold text-base shrink-0">POS Supermercado</span>
 
         <div className="flex-1 overflow-hidden">
