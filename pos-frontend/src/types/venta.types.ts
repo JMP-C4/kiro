@@ -1,39 +1,41 @@
+// Respuesta del backend Lambda (snake_case)
 export interface VentaItemResponse {
-  id: number
-  productoId: number | null
-  nombreProducto: string
+  idx: number
+  producto_id: string | null
+  nombre_producto: string
   cantidad: number
-  precioUnitario: number
-  incluyeIva: boolean
+  precio_unitario: number
+  incluye_iva: boolean
   subtotal: number
 }
 
 export interface VentaResponse {
-  id: number
-  numeroVenta: string
-  cajeroNombre: string
-  subtotalSinIva: number
-  descuentoPct: number
-  descuentoMonto: number
-  ivaMonto: number
-  totalConIva: number
-  metodoPago: 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA'
-  montoRecibido: number | null
+  id: string
+  numero_venta: string
+  cajero_nombre: string
+  subtotal_sin_iva: number
+  descuento_pct: number
+  descuento_monto: number
+  iva_monto: number
+  total_con_iva: number
+  metodo_pago: 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA'
+  monto_recibido: number | null
   cambio: number | null
-  createdAt: string  // ISO date string
+  created_at: string
   items: VentaItemResponse[]
 }
 
+// Request al backend (snake_case — igual que el backend espera)
 export interface VentaRequest {
   items: {
-    productoId: number | null
-    nombreProducto: string
+    producto_id: string | null
+    nombre_producto: string
     cantidad: number
-    precioUnitario: number
-    incluyeIva: boolean
+    precio_unitario: number
+    incluye_iva: boolean
     subtotal: number
   }[]
-  descuentoPct: number
-  metodoPago: 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA'
-  montoRecibido: number | null
+  descuento_pct: number
+  metodo_pago: 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA'
+  monto_recibido: number | null
 }

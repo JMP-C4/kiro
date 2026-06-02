@@ -1,3 +1,12 @@
+/**
+ * ThemeContext — gestión de tema oscuro/claro.
+ *
+ * Estrategia:
+ *   - Por defecto: dark (sin clase en <html>)
+ *   - Modo claro:  clase `light` en <html>
+ *   - Persiste en localStorage con clave 'theme'
+ */
+
 import {
   createContext,
   useContext,
@@ -7,7 +16,7 @@ import {
   type ReactNode,
 } from 'react'
 
-const THEME_KEY = 'theme'
+const THEME_KEY = 'pos-theme'
 
 interface ThemeContextValue {
   isDark: boolean
@@ -16,31 +25,30 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [isDark, setIsDark] = useState<boolean>(() => {
-    // Read initial value from localStorage synchronously
-    const stored = localStorage.getItem(THEME_KEY)
-    if (stored === 'dark') return true
-    if (stored === 'light') return false
-    // Default: prefer system setting
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  })
+function getInitialDark(): boolean {
+  const stored = localStorage.getItem(THEME_KEY)
+  if (stored === 'light') return false
+  if (stored === 'dark') return true
+  // Sin preferencia guardada → usar preferencia del sistema
+  return !window.matchMedia('(prefers-color-scheme: light)').matches
+}
 
-  // Sync class on documentElement whenever isDark changes
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [isDark, setIsDark] = useState<boolean>(getInitialDark)
+
+  // Aplica la clase al elemento raíz cada vez que cambia el tema
   useEffect(() => {
     const root = document.documentElement
     if (isDark) {
-      root.classList.add('dark')
+      root.classList.remove('light')
       localStorage.setItem(THEME_KEY, 'dark')
     } else {
-      root.classList.remove('dark')
+      root.classList.add('light')
       localStorage.setItem(THEME_KEY, 'light')
     }
   }, [isDark])
 
-  const toggleTheme = useCallback(() => {
-    setIsDark((prev) => !prev)
-  }, [])
+  const toggleTheme = useCallback(() => setIsDark(prev => !prev), [])
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
@@ -51,8 +59,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext)
-  if (!ctx) {
-    throw new Error('useTheme must be used inside <ThemeProvider>')
-  }
+  if (!ctx) throw new Error('useTheme must be used inside <ThemeProvider>')
   return ctx
 }

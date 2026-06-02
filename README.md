@@ -1,218 +1,292 @@
-<div align="center">
+# POS Supermercado
 
-# 🏪 Inventory POS System
+Sistema de Punto de Venta para supermercado con dos proyectos independientes.
 
-**Sistema completo de gestión de inventario y punto de venta**
-
-Backend serverless en AWS + Frontend React con autenticación JWT
-
-</div>
-
----
-
-## Capturas de pantalla
-
-Las imágenes viven en [`docs/screenshots/`](docs/screenshots/). En GitHub se muestran con rutas **relativas a la raíz del repo** (por ejemplo `docs/screenshots/login.svg`). Si exportas PNG, súbelos con el mismo nombre y cambia la extensión en las etiquetas de abajo.
-
-<p align="center">
-  <img src="docs/screenshots/login.svg" alt="Pantalla de login" width="420" />
-  &nbsp;&nbsp;
-  <img src="docs/screenshots/dashboard.svg" alt="Dashboard" width="420" />
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/pos.svg" alt="Punto de venta (POS)" width="860" />
-</p>
-
-<p align="center"><sub>Placeholders SVG incluidos en el repo. Sustituye por <code>login.png</code>, <code>dashboard.png</code> y <code>pos.png</code> si prefieres capturas reales.</sub></p>
+| Proyecto | Tecnología | Puerto |
+|---|---|---|
+| `pos-frontend/` | React 18 + TypeScript + Vite + Tailwind v4 | `http://localhost:5173` |
+| `serverless-inventory-api/` | Node.js 20 + AWS Lambda (local) + DynamoDB | `http://localhost:3000` |
 
 ---
 
-## ¿Qué es esto?
+## Requisitos previos
 
-Un sistema para que una startup gestione su inventario y realice ventas en caja. Tiene dos partes que trabajan juntas:
+- Node.js >= 20
+- [DynamoDB Local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html) corriendo en el puerto `8000`
+- AWS CLI (solo para crear tablas locales)
 
-- **Backend** (`serverless-inventory-api/`) — la API que guarda y procesa todos los datos en AWS
-- **Frontend** (`pos-frontend/`) — la interfaz web que usan los cajeros y administradores
+### Instalar DynamoDB Local (una sola vez)
 
----
+```bash
+# Opción 1 — Docker (recomendado)
+docker run -d -p 8000:8000 amazon/dynamodb-local
 
-## Estructura del proyecto
-
-```
-Kiro/
-├── docs/
-│   └── screenshots/            ← Capturas para el README (SVG/PNG)
-├── serverless-inventory-api/   ← API REST en AWS (Node.js + Lambda + DynamoDB)
-├── pos-frontend/               ← Interfaz web (React + TypeScript + Tailwind)
-└── README.md                   ← Este archivo
+# Opción 2 — JAR directo
+# Descargar desde https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html
+java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb -port 8000
 ```
 
 ---
 
-## Backend — Serverless Inventory API
-
-### ¿Qué hace?
-
-Expone una API REST que permite:
-
-| Módulo | Qué puedes hacer |
-|--------|-----------------|
-| `/health` | Verificar que el sistema está funcionando |
-| `/productos` | Crear, ver, editar y eliminar productos del inventario |
-| `/clientes` | Gestionar la base de datos de compradores |
-| `/cobros` | Registrar ventas y descontar stock automáticamente |
-| `/creditos` | Asignar saldo a favor a clientes |
-| `/stats` | Ver métricas del inventario (stock total, categorías, alertas) |
-| `/pos/*` | Abrir caja, registrar ventas y generar tickets |
-
-### Tecnologías
-
-- **Node.js 20** — lenguaje de las funciones
-- **AWS SAM** — despliega todo en AWS con un solo comando
-- **API Gateway** — recibe las peticiones HTTP
-- **Lambda** — ejecuta la lógica de negocio (sin servidor que administrar)
-- **DynamoDB** — base de datos NoSQL que escala automáticamente
-- **Jest + fast-check** — tests unitarios y property-based testing
-
-### Cómo correrlo localmente
+## Backend — `serverless-inventory-api/`
 
 ```bash
 cd serverless-inventory-api
-
-# Instalar dependencias
 npm install
-
-# Correr tests
-npm test
-
-# Levantar la API localmente (requiere AWS SAM CLI instalado)
-sam build
-sam local start-api --port 3000
 ```
 
-### Cómo desplegarlo en AWS
+### Primera vez — crear tablas y cargar datos de prueba
 
 ```bash
-cd serverless-inventory-api
-
-# Primera vez (te pregunta región, nombre del stack, etc.)
-sam build
-sam deploy --guided
-
-# Veces siguientes
-sam build && sam deploy
+npm run setup:local
 ```
 
-### Variables de entorno del backend
+Esto ejecuta dos pasos:
+1. `create-tables-local.sh` — crea las 4 tablas en DynamoDB Local
+2. `seed:local` — carga usuarios, productos y configuración de prueba
 
-Estas se configuran automáticamente al desplegar con SAM. Para desarrollo local, créalas en un archivo `.env`:
-
-| Variable | Para qué sirve |
-|----------|---------------|
-| `APP_VERSION` | Versión que muestra el health check |
-| `ALLOWED_ORIGINS` | Dominios que pueden hacer peticiones (CORS) |
-| `JWT_SECRET` | Clave para validar los tokens de autenticación |
-| `PRODUCTOS_TABLE` | Nombre de la tabla de productos en DynamoDB |
-| `CLIENTES_TABLE` | Nombre de la tabla de clientes |
-| `COBROS_TABLE` | Nombre de la tabla de cobros |
-| `CREDITOS_TABLE` | Nombre de la tabla de créditos |
-| `POS_SESIONES_TABLE` | Nombre de la tabla de sesiones de caja |
-| `POS_VENTAS_TABLE` | Nombre de la tabla de ventas |
-
----
-
-## Frontend — POS Interface
-
-### ¿Qué hace?
-
-Una aplicación web que consume el backend y permite:
-
-- **Login seguro** con usuario y contraseña (JWT)
-- **Ver y buscar productos** con filtros por categoría y paginación
-- **Gestionar clientes** — crear, editar, eliminar
-- **Registrar cobros** con descuento automático de stock
-- **Asignar créditos** a clientes
-- **Punto de venta** — abrir caja, armar carrito, cobrar y generar ticket
-- **Dashboard** con métricas del inventario
-
-### Tecnologías
-
-- **React 18 + TypeScript** — interfaz de usuario
-- **Vite** — herramienta de desarrollo rápida
-- **Tailwind CSS v4** — estilos
-- **React Router v7** — navegación entre páginas
-- **React Query** — manejo de datos del servidor (cache, loading, errores)
-- **Axios** — peticiones HTTP con JWT automático
-- **React Hook Form + Zod** — formularios con validación
-
-### Cómo correrlo
+### Iniciar el servidor local
 
 ```bash
-cd pos-frontend
-
-# Instalar dependencias
-npm install
-
-# Crear archivo de configuración
-cp .env.example .env
-# Edita .env y pon la URL de tu backend:
-# VITE_API_URL=http://localhost:3000
-
-# Levantar en modo desarrollo
 npm run dev
 ```
 
-Abre `http://localhost:5173` en tu navegador.
+El servidor corre en `http://localhost:3000` y emula API Gateway + Lambda.
 
-### Cómo construir para producción
+### Usuarios de prueba (cargados por el seed)
+
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `admin` | `admin123` | ADMIN |
+| `supervisor` | `supervisor123` | SUPERVISOR |
+| `cajero` | `cajero123` | CAJERO |
+
+### Scripts disponibles
+
+```bash
+npm run dev          # Servidor local en :3000
+npm run setup:local  # Crear tablas + cargar seed (primera vez)
+npm run seed:local   # Solo recargar datos de prueba
+npm run test         # Todos los tests
+npm run test:auth    # Tests de autenticación y autorización
+npm run test:ventas  # Tests de ventas e IVA
+```
+
+### Endpoints
+
+| Método | Ruta | Rol mínimo |
+|---|---|---|
+| `GET` | `/health` | Público |
+| `POST` | `/auth/login` | Público |
+| `GET` | `/productos?q=texto` | CAJERO |
+| `GET` | `/productos?page=0&size=50` | CAJERO |
+| `POST` | `/productos` | ADMIN |
+| `PUT` | `/productos/:id` | ADMIN |
+| `DELETE` | `/productos/:id` | ADMIN |
+| `POST` | `/ventas` | CAJERO |
+| `GET` | `/ventas/:id` | CAJERO |
+| `GET` | `/usuarios` | ADMIN |
+| `POST` | `/usuarios` | ADMIN |
+| `PUT` | `/usuarios/:username` | ADMIN |
+| `DELETE` | `/usuarios/:username` | ADMIN |
+| `GET` | `/reportes/ventas?desde=YYYY-MM-DD&hasta=YYYY-MM-DD` | SUPERVISOR |
+| `GET` | `/configuracion` | CAJERO |
+| `PUT` | `/configuracion` | ADMIN |
+
+---
+
+## Frontend — `pos-frontend/`
 
 ```bash
 cd pos-frontend
+npm install
+```
+
+### Configurar la URL del backend
+
+El archivo `.env` ya existe con:
+
+```
+VITE_API_URL=http://localhost:3000
+```
+
+Cámbialo si el backend corre en otro puerto o en AWS.
+
+### Iniciar el servidor de desarrollo
+
+```bash
+npm run dev
+```
+
+La app corre en `http://localhost:5173`.
+
+### Scripts disponibles
+
+```bash
+npm run dev      # Servidor de desarrollo en :5173
+npm run build    # Build de producción
+npm run test     # Todos los tests unitarios
+npm run lint     # Linter ESLint
+```
+
+### Atajos de teclado del POS
+
+| Tecla | Acción |
+|---|---|
+| `F1` | Foco al buscador de productos |
+| `F2` | Eliminar último ítem del carrito |
+| `F3` | Limpiar carrito (pide confirmación) |
+| `F4` | Abrir modal IVA / Descuento |
+| `F5` | Abrir modal Método de Pago |
+| `F6` | Procesar venta (cobrar) |
+| `F7` | Imprimir ticket |
+| `F8` | Nueva venta |
+| `F9` | Cerrar sesión |
+| `M` | Menú de desbordamiento |
+| `↑ ↓` | Navegar ítems del carrito |
+| `Del` | Eliminar ítem seleccionado |
+| `Esc` | Cerrar modal activo |
+
+---
+
+## Flujo completo de prueba
+
+1. Iniciar DynamoDB Local
+2. `cd serverless-inventory-api && npm run setup:local` (primera vez)
+3. `npm run dev` (backend en :3000)
+4. `cd pos-frontend && npm run dev` (frontend en :5173)
+5. Abrir `http://localhost:5173`
+6. Login con `cajero` / `cajero123`
+7. Buscar producto con F1 → escanear código de barras o escribir nombre
+8. Agregar al carrito → F5 (método de pago) → F6 (cobrar) → F7 (imprimir)
+
+---
+
+## Tests
+
+### Frontend (37 tests)
+
+```bash
+cd pos-frontend
+npm test
+```
+
+Cubre: P-01 P-02 P-03 P-04 (IVA), P-05 (carrito), P-11 RNF-13 (atajos).
+
+### Backend (31 tests)
+
+```bash
+cd serverless-inventory-api
+npm test
+```
+
+Cubre: P-06 (autorización), P-07 (password), P-08 (numero_venta), P-10 (JWT), P-12 (ticket).
+
+---
+
+## Despliegue en AWS
+
+### Prerrequisitos
+
+- [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html) instalado
+- Credenciales AWS configuradas (`aws configure`)
+- Una cuenta AWS con permisos para Lambda, API Gateway, DynamoDB, IAM, S3 y CloudFormation
+
+### Paso 1 — Editar `samconfig.toml`
+
+```toml
+# serverless-inventory-api/samconfig.toml
+parameter_overrides = [
+  "Stage=prod",
+  "JwtSecret=TU_SECRETO_SEGURO_MIN_32_CARACTERES",
+  "AllowedOrigin=https://TU_DOMINIO_FRONTEND.com"
+]
+region = "us-east-1"   # tu región
+```
+
+### Paso 2 — Build y deploy del backend
+
+```bash
+cd serverless-inventory-api
+
+# Primera vez (te pide S3 bucket, región, etc.)
+npm run deploy:guided
+
+# Despliegues posteriores
 npm run build
-# Los archivos listos para subir quedan en dist/
+npm run deploy
 ```
 
----
+SAM crea automáticamente:
+- 6 funciones Lambda (health, login, productos, usuarios, ventas, reportes, configuracion)
+- 1 API Gateway HTTP API con CORS configurado
+- 4 tablas DynamoDB con sus GSIs
+- Roles IAM con permisos mínimos por función
 
-## Flujo completo de uso
+Al finalizar verás en los Outputs:
+```
+ApiUrl = https://XXXXXXXXXX.execute-api.us-east-1.amazonaws.com
+```
+
+### Paso 3 — Cargar datos iniciales en AWS
+
+```bash
+AWS_REGION=us-east-1 STAGE=prod npm run seed:aws
+```
+
+Usuarios creados (cambia las contraseñas después del primer login):
+
+| Usuario | Contraseña inicial | Rol |
+|---|---|---|
+| `admin` | `Admin2024!` | ADMIN |
+| `supervisor` | `Super2024!` | SUPERVISOR |
+| `cajero` | `Cajero2024!` | CAJERO |
+
+### Paso 4 — Build y deploy del frontend
+
+```bash
+cd pos-frontend
+
+# Crear .env.production con la URL real del API Gateway
+echo "VITE_API_URL=https://XXXXXXXXXX.execute-api.us-east-1.amazonaws.com" > .env.production
+
+# Build
+npm run build
+# Los archivos quedan en dist/
+```
+
+**Opción A — S3 + CloudFront (recomendado)**
+
+```bash
+# Crear bucket y subir archivos
+aws s3 mb s3://pos-frontend-prod
+aws s3 sync dist/ s3://pos-frontend-prod --delete
+aws s3 website s3://pos-frontend-prod --index-document index.html --error-document index.html
+```
+
+**Opción B — Amplify Hosting**
+
+```bash
+# En la consola de AWS Amplify → "Host web app" → conectar repositorio
+# o con CLI:
+amplify init
+amplify add hosting
+amplify publish
+```
+
+### Flujo de URLs en producción
 
 ```
-1. El cajero abre el navegador → ve la pantalla de login
-2. Ingresa usuario y contraseña → el backend valida y devuelve un token JWT
-3. El frontend guarda el token y lo envía en cada petición automáticamente
-4. El cajero puede ver productos, registrar ventas, gestionar clientes, etc.
-5. Al cerrar sesión, el token se elimina y vuelve al login
+Usuario → CloudFront/Amplify (frontend) → API Gateway → Lambda → DynamoDB
+         https://tu-app.com              https://xxx.execute-api.region.amazonaws.com
 ```
 
----
+Actualizar CORS en `samconfig.toml`:
+```
+"AllowedOrigin=https://tu-app.com"
+```
 
-## Prerrequisitos para desarrollo
-
-| Herramienta | Para qué |
-|-------------|---------|
-| Node.js 20+ | Correr el frontend y el backend |
-| AWS CLI | Configurar credenciales de AWS |
-| AWS SAM CLI | Desplegar y probar el backend localmente |
-| Cuenta AWS | Donde se despliega el backend |
-
----
-
-## Estado del proyecto
-
-| Componente | Estado |
-|-----------|--------|
-| Backend — Dominio y entidades | ✅ Completo |
-| Backend — Repositorios DynamoDB | 🔄 En progreso |
-| Backend — Handlers Lambda | ⏳ Pendiente |
-| Backend — Template SAM | ⏳ Pendiente |
-| Frontend — Login y autenticación | ✅ Completo |
-| Frontend — Listado de productos | ✅ Completo |
-| Frontend — CRUD completo | ⏳ Pendiente |
-| Frontend — Módulo POS | ⏳ Pendiente |
-
----
-
-<div align="center">
-  Construido con Node.js 20 · AWS SAM · React 18 · Tailwind CSS v4
-</div>
+y re-deployar:
+```bash
+npm run deploy
+```

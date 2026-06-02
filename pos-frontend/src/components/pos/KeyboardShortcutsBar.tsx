@@ -33,12 +33,16 @@ export default function KeyboardShortcutsBar() {
       {SHORTCUTS.map(({ key, label }) => (
         <span
           key={key}
-          className="inline-flex items-center gap-1 text-xs text-white/70"
+          className="inline-flex items-center gap-1 text-xs"
+          style={{ color: 'var(--text-secondary)' }}
         >
-          <kbd className="inline-flex items-center justify-center min-w-8 px-1.5 py-0.5 rounded bg-white/15 border border-white/25 font-mono text-[10px] font-semibold text-white leading-none">
-            {key}
-          </kbd>
-          <span className="hidden sm:inline text-white/50">{label}</span>
+          <kbd className="key">{key}</kbd>
+          <span
+            className="hidden sm:inline"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            {label}
+          </span>
         </span>
       ))}
     </nav>

@@ -1,0 +1,7 @@
+# Archivos excluidos del package SAM — no se suben a Lambda
+src/tests/
+scripts/
+README.md
+.env*
+*.test.mjs
+.gitignore

@@ -1,0 +1,27 @@
+# Configuración de AWS SAM — pos-supermarket
+version = 0.1
+
+[default]
+[default.global.parameters]
+stack_name = "pos-supermarket"
+
+[default.build.parameters]
+cached   = true
+parallel = true
+
+[default.deploy.parameters]
+capabilities      = "CAPABILITY_IAM"
+confirm_changeset = true
+region            = "us-east-1"
+s3_bucket         = "aws-sam-cli-managed-default-samclisourcebucket-wgivxr9licai"
+
+# AllowedOrigin = * durante el primer deploy.
+# Después de obtener la URL del frontend, cambia este valor y vuelve a deployar.
+parameter_overrides = [
+  "Stage=prod",
+  "JwtSecret=16e95d5a23ca8e7b7e0567dd9c855c04793c891c2263e008f65b14c7afb8ae80df9d4c57d5702dc2cabb508c6c9fe47c",
+  "AllowedOrigin=*"
+]
+
+[default.package.parameters]
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-wgivxr9licai"

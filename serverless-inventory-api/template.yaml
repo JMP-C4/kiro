@@ -1,0 +1,315 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: POS Supermercado — Lambda + API Gateway + DynamoDB
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 15
+    MemorySize: 256
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        JWT_SECRET: !Ref JwtSecret
+        JWT_EXPIRES_IN: '8h'
+        ALLOWED_ORIGIN: !Ref AllowedOrigin
+        USUARIOS_TABLE: !Ref UsuariosTable
+        PRODUCTOS_TABLE: !Ref ProductosTable
+        VENTAS_TABLE: !Ref VentasTable
+        CONFIGURACION_TABLE: !Ref ConfiguracionTable
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Entorno de despliegue
+  JwtSecret:
+    Type: String
+    NoEcho: true
+    MinLength: 32
+    Description: Secreto JWT — mínimo 32 caracteres
+  AllowedOrigin:
+    Type: String
+    Default: http://localhost:5173
+    Description: Origen del frontend (CORS)
+
+Resources:
+  PosApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Auth:
+        DefaultAuthorizer: NONE
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref AllowedOrigin
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+
+  HealthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/health.handler
+      CodeUri: .
+      Events:
+        Health:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /health
+            Method: GET
+
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/login.handler
+      CodeUri: .
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref UsuariosTable
+      Events:
+        Login:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /auth/login
+            Method: POST
+
+  ProductosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/productos.handler
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProductosTable
+      Events:
+        ProductosGet:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /productos
+            Method: GET
+        ProductosPost:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /productos
+            Method: POST
+        ProductosPut:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /productos/{id}
+            Method: PUT
+        ProductosDelete:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /productos/{id}
+            Method: DELETE
+
+  UsuariosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/usuarios.handler
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsuariosTable
+      Events:
+        UsuariosGet:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /usuarios
+            Method: GET
+        UsuariosPost:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /usuarios
+            Method: POST
+        UsuariosPut:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /usuarios/{username}
+            Method: PUT
+        UsuariosDelete:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /usuarios/{username}
+            Method: DELETE
+
+  VentasFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/ventas.handler
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref VentasTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref UsuariosTable
+      Events:
+        VentasPost:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /ventas
+            Method: POST
+        VentasGetById:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /ventas/{id}
+            Method: GET
+
+  ReportesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/reportes.handler
+      CodeUri: .
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref VentasTable
+      Events:
+        ReportesVentas:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /reportes/ventas
+            Method: GET
+
+  ConfiguracionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/configuracion.handler
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConfiguracionTable
+      Events:
+        ConfiguracionGet:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /configuracion
+            Method: GET
+        ConfiguracionPut:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /configuracion
+            Method: PUT
+
+  UsuariosTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pos-usuarios-${Stage}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: username
+          AttributeType: S
+      KeySchema:
+        - AttributeName: username
+          KeyType: HASH
+
+  ProductosTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pos-productos-${Stage}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: codigo
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: codigo-index
+          KeySchema:
+            - AttributeName: codigo
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  VentasTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pos-ventas-${Stage}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: numero_venta
+          AttributeType: S
+        - AttributeName: fecha
+          AttributeType: S
+        - AttributeName: created_at
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: numero-venta-index
+          KeySchema:
+            - AttributeName: numero_venta
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: fecha-index
+          KeySchema:
+            - AttributeName: fecha
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  ConfiguracionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pos-configuracion-${Stage}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+Outputs:
+  ApiUrl:
+    Description: URL base de la API — úsala en VITE_API_URL del frontend
+    Value: !Sub 'https://${PosApi}.execute-api.${AWS::Region}.amazonaws.com'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiUrl'
+  UsuariosTableName:
+    Value: !Ref UsuariosTable
+    Export:
+      Name: !Sub '${AWS::StackName}-UsuariosTable'
+  ProductosTableName:
+    Value: !Ref ProductosTable
+    Export:
+      Name: !Sub '${AWS::StackName}-ProductosTable'
+  VentasTableName:
+    Value: !Ref VentasTable
+    Export:
+      Name: !Sub '${AWS::StackName}-VentasTable'
+  ConfiguracionTableName:
+    Value: !Ref ConfiguracionTable
+    Export:
+      Name: !Sub '${AWS::StackName}-ConfiguracionTable'

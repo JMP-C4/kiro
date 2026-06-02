@@ -5,7 +5,7 @@
 Implementación incremental de un sistema POS de supermercado con dos proyectos separados. El plan está organizado en **8 fases** que progresan desde la infraestructura base hasta el despliegue.
 
 **Frontend:** React 18 · TypeScript · Vite · Tailwind CSS v4 · Glassmorphism
-**Backend:** Spring Boot 3 · Java 17 · PostgreSQL · Spring Security · JWT
+**Backend:** Node.js 20 · AWS Lambda · API Gateway · DynamoDB (JSON, no relacional) · JWT
 
 ---
 
@@ -19,16 +19,17 @@ Implementación incremental de un sistema POS de supermercado con dos proyectos 
   - Configurar `index.css` con tokens glassmorphism y `@media print`
   - _Requisitos: RNF-15, RNF-17_
 
-- [x] 1.2 Inicializar proyecto backend Spring Boot
-  - Crear proyecto con Spring Initializr: Spring Web, Spring Security, Spring Data JPA, PostgreSQL Driver, Flyway, Lombok, Validation
-  - Configurar `application.yml` con datasource PostgreSQL, JWT secret, CORS
-  - Crear base de datos PostgreSQL local: `pos_supermarket`
+- [-] 1.2 Inicializar proyecto backend serverless
+  - Crear `serverless-inventory-api/` con AWS SAM (`template.yaml`)
+  - Definir tablas DynamoDB: `pos-usuarios`, `pos-productos`, `pos-ventas`, `pos-configuracion`
+  - Configurar JWT secret, CORS en variables de entorno Lambda
   - _Requisitos: RNF-08, RNF-19_
 
-- [x] 1.3 Crear migraciones Flyway — esquema inicial
-  - Crear `V1__init.sql` con tablas: `usuarios`, `productos`, `ventas`, `venta_items`, `configuracion`
-  - Crear `V2__seed.sql` con usuario admin inicial y configuración por defecto
-  - Verificar que Flyway aplica las migraciones al iniciar el backend
+- [x] 1.3 Crear seed JSON — esquema DynamoDB inicial
+  - Documentar esquema en `docs/database/dynamodb-schema.md`
+  - Crear `db/dynamodb/seed/*.json`: usuarios, productos, configuracion, ventas
+  - Script `serverless-inventory-api/scripts/seed.mjs` para cargar datos
+  - Ventas: ítems embebidos en JSON (`items[]`), sin tabla `venta_items`
   - _Requisitos: Req-9, Req-11_
 
 - [-] 1.4 Configurar Spring Security base
@@ -42,7 +43,7 @@ Implementación incremental de un sistema POS de supermercado con dos proyectos 
 
 ## Fase 2 — Autenticación
 
-- [ ] 2.1 Backend — Endpoint de login
+- [x] 2.1 Backend — Endpoint de login
   - Crear `AuthController.java` con `POST /auth/login`
   - Crear `AuthService.java` que valida credenciales con bcrypt y emite JWT
   - JWT debe incluir: `sub` (username), `rol`, `nombre`, `exp` (8 horas)
@@ -72,7 +73,7 @@ Implementación incremental de un sistema POS de supermercado con dos proyectos 
 
 ## Fase 3 — Backend Core: Productos y Usuarios
 
-- [ ] 3.1 Backend — CRUD de Productos
+- [x] 3.1 Backend — CRUD de Productos
   - Crear `Producto.java` (@Entity) con todos los campos del esquema
   - Crear `ProductoRepository.java` con queries de búsqueda por código y nombre
   - Crear `ProductoService.java` con lógica de negocio y validaciones
@@ -80,7 +81,7 @@ Implementación incremental de un sistema POS de supermercado con dos proyectos 
   - Búsqueda: `GET /productos?q=texto` retorna en máximo 300ms
   - _Requisitos: Req-8, RNF-01_
 
-- [ ] 3.2 Backend — CRUD de Usuarios
+- [x] 3.2 Backend — CRUD de Usuarios
   - Crear `Usuario.java` (@Entity) con bcrypt en `@PrePersist`
   - Crear `UsuarioRepository.java`
   - Crear `UsuarioService.java` — nunca retornar `password_hash`
@@ -88,7 +89,7 @@ Implementación incremental de un sistema POS de supermercado con dos proyectos 
   - Solo accesible para rol ADMIN
   - _Requisitos: Req-9, RNF-06, P-07_
 
-- [ ] 3.3 Backend — Manejo global de errores
+- [x] 3.3 Backend — Manejo global de errores
   - Crear `GlobalExceptionHandler.java` con `@ControllerAdvice`
   - Retornar siempre `{ codigo, mensaje, detalles }` en errores
   - Manejar: 400 (validación), 401 (no autenticado), 403 (sin permiso), 404 (no encontrado), 409 (duplicado)
@@ -183,7 +184,7 @@ Implementación incremental de un sistema POS de supermercado con dos proyectos 
   - Deshabilitar confirmar si monto recibido < total
   - _Requisitos: Req-5, P-04_
 
-- [ ] 6.3 Backend — Endpoint de ventas
+- [x] 6.3 Backend — Endpoint de ventas
   - Crear `Venta.java` y `VentaItem.java` (@Entity)
   - Crear `VentaService.java` — calcular IVA en backend también (validación)
   - Crear `VentaController.java` con `POST /ventas`
@@ -230,20 +231,20 @@ Implementación incremental de un sistema POS de supermercado con dos proyectos 
   - Solo visible para rol ADMIN
   - _Requisitos: Req-9 (9.8)_
 
-- [ ] 7.3 Backend — Endpoint de reportes
+- [x] 7.3 Backend — Endpoint de reportes
   - Crear `ReporteController.java` con `GET /reportes/ventas?desde=&hasta=`
   - Retornar: total ventas, monto total, desglose por método de pago, lista de ventas
   - Solo accesible para SUPERVISOR y ADMIN
   - _Requisitos: Req-10_
 
-- [ ] 7.4 Frontend — Módulo de Reportes (Supervisor/Admin)
+- [x] 7.4 Frontend — Módulo de Reportes (Supervisor/Admin)
   - Crear `Reportes.tsx` con filtros: hoy, semana, mes, rango personalizado
   - Mostrar resumen en bento cards glassmorphism
   - Tabla de ventas individuales
   - Solo visible para SUPERVISOR y ADMIN
   - _Requisitos: Req-10 (10.3, 10.4, 10.6)_
 
-- [ ] 7.5 Backend + Frontend — Configuración del sistema
+- [x] 7.5 Backend + Frontend — Configuración del sistema
   - Backend: `GET /configuracion` y `PUT /configuracion`
   - Frontend: `Configuracion.tsx` con formulario para nombre negocio, tasa IVA, formato papel
   - Al guardar: actualizar contexto de configuración en el frontend
@@ -254,39 +255,39 @@ Implementación incremental de un sistema POS de supermercado con dos proyectos 
 
 ## Fase 8 — Testing y Pulido
 
-- [ ] 8.1 Tests unitarios — lógica de IVA
+- [x] 8.1 Tests unitarios — lógica de IVA
   - Tests para `calcularTotales`: IVA incluido, IVA excluido, con descuento, sin ítems
   - Verificar P-01, P-02, P-03, P-04
   - _Requisitos: P-01, P-02, P-03, P-04_
 
-- [ ] 8.2 Tests unitarios — reducer del carrito
+- [x] 8.2 Tests unitarios — reducer del carrito
   - Tests para `usePOS`: ADD_ITEM siempre crea línea nueva, REMOVE_LAST, CLEAR_CART
   - Verificar P-05
   - _Requisitos: P-05_
 
-- [ ] 8.3 Tests backend — autenticación y autorización
+- [x] 8.3 Tests backend — autenticación y autorización
   - Tests JUnit para `AuthService`: login válido, credenciales inválidas, usuario inactivo
   - Tests de autorización: CAJERO no puede POST /productos (P-06)
   - _Requisitos: P-06, P-07, P-10_
 
-- [ ] 8.4 Tests backend — ventas
+- [x] 8.4 Tests backend — ventas
   - Tests para `VentaService`: cálculo IVA, número de venta único
   - Verificar P-08, P-12
   - _Requisitos: P-08, P-12_
 
-- [ ] 8.5 Verificación de atajos de teclado
+- [x] 8.5 Verificación de atajos de teclado
   - Verificar que F1-F9 funcionan en menos de 50ms (RNF-13)
   - Verificar que atajos se desactivan con modal abierto (P-11)
   - Verificar flujo completo sin ratón: buscar → agregar → pagar → imprimir
   - _Requisitos: RNF-11, RNF-13, P-11_
 
-- [ ] 8.6 Verificación de formatos de impresión
+- [x] 8.6 Verificación de formatos de impresión
   - Probar ticket en formato 80mm, 58mm y carta
   - Verificar que `@media print` oculta correctamente la interfaz
   - Verificar guardado como PDF
   - _Requisitos: Req-12_
 
-- [ ] 8.7 Checkpoint final
+- [x] 8.7 Checkpoint final
   - Ejecutar suite completa de tests frontend y backend
   - Verificar flujo completo: login → POS → venta → ticket → nueva venta
   - Verificar acceso por roles en todos los módulos

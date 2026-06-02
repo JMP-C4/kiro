@@ -1,0 +1,58 @@
+{
+  "tables": {
+    "UsuariosTable": {
+      "TableName": "pos-usuarios",
+      "KeySchema": [{ "AttributeName": "username", "KeyType": "HASH" }],
+      "AttributeDefinitions": [{ "AttributeName": "username", "AttributeType": "S" }],
+      "BillingMode": "PAY_PER_REQUEST"
+    },
+    "ProductosTable": {
+      "TableName": "pos-productos",
+      "KeySchema": [{ "AttributeName": "id", "KeyType": "HASH" }],
+      "AttributeDefinitions": [
+        { "AttributeName": "id", "AttributeType": "S" },
+        { "AttributeName": "codigo", "AttributeType": "S" }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "codigo-index",
+          "KeySchema": [{ "AttributeName": "codigo", "KeyType": "HASH" }],
+          "Projection": { "ProjectionType": "ALL" }
+        }
+      ],
+      "BillingMode": "PAY_PER_REQUEST"
+    },
+    "VentasTable": {
+      "TableName": "pos-ventas",
+      "KeySchema": [{ "AttributeName": "id", "KeyType": "HASH" }],
+      "AttributeDefinitions": [
+        { "AttributeName": "id", "AttributeType": "S" },
+        { "AttributeName": "numero_venta", "AttributeType": "S" },
+        { "AttributeName": "fecha", "AttributeType": "S" },
+        { "AttributeName": "created_at", "AttributeType": "S" }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "numero-venta-index",
+          "KeySchema": [{ "AttributeName": "numero_venta", "KeyType": "HASH" }],
+          "Projection": { "ProjectionType": "ALL" }
+        },
+        {
+          "IndexName": "fecha-index",
+          "KeySchema": [
+            { "AttributeName": "fecha", "KeyType": "HASH" },
+            { "AttributeName": "created_at", "KeyType": "RANGE" }
+          ],
+          "Projection": { "ProjectionType": "ALL" }
+        }
+      ],
+      "BillingMode": "PAY_PER_REQUEST"
+    },
+    "ConfiguracionTable": {
+      "TableName": "pos-configuracion",
+      "KeySchema": [{ "AttributeName": "id", "KeyType": "HASH" }],
+      "AttributeDefinitions": [{ "AttributeName": "id", "AttributeType": "S" }],
+      "BillingMode": "PAY_PER_REQUEST"
+    }
+  }
+}

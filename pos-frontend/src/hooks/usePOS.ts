@@ -2,12 +2,11 @@
  * usePOS.ts
  *
  * Hook centralizado del carrito POS usando useReducer.
- * Gestiona el estado completo de la sesión de venta:
- * ítems, selección, descuento, método de pago, modales y totales.
+ * La tasa de IVA se recibe como parámetro para que el ConfigContext
+ * pueda actualizarla en tiempo real (Req-11 11.5).
  *
  * Propiedades de corrección:
  *   P-05: ADD_ITEM siempre crea una línea nueva — nunca acumula en línea existente.
- *         El lineId (nanoid) es generado por el llamador antes de invocar addItem().
  *
  * Requisitos: Req-3
  */
@@ -15,11 +14,6 @@
 import { useReducer } from 'react'
 import type { CartItem, MetodoPago, ModalType, PosState, Totales } from '../types/pos.types'
 import { calcularTotales } from '../lib/calcularTotales'
-
-// ---------------------------------------------------------------------------
-// Tasa IVA hardcodeada — será configurable en tarea 7.5
-// ---------------------------------------------------------------------------
-const TASA_IVA = 0.19
 
 // ---------------------------------------------------------------------------
 // Tipos de acción
@@ -59,14 +53,15 @@ const initialState: PosState = {
 // ---------------------------------------------------------------------------
 // Helper: recalcular totales a partir del estado parcial
 // ---------------------------------------------------------------------------
-function recalcular(items: CartItem[], descuentoPct: number): Totales {
-  return calcularTotales(items, TASA_IVA, descuentoPct)
+function recalcular(items: CartItem[], descuentoPct: number, tasaIVA: number): Totales {
+  return calcularTotales(items, tasaIVA, descuentoPct)
 }
 
 // ---------------------------------------------------------------------------
-// Reducer
+// Reducer factory — recibe tasaIVA para que sea dinámica (Req-11 11.5)
 // ---------------------------------------------------------------------------
-function posReducer(state: PosState, action: PosAction): PosState {
+function makeReducer(tasaIVA: number) {
+  return function posReducer(state: PosState, action: PosAction): PosState {
   switch (action.type) {
     case 'ADD_ITEM': {
       // P-05: siempre línea nueva — nunca acumula
@@ -74,7 +69,7 @@ function posReducer(state: PosState, action: PosAction): PosState {
       return {
         ...state,
         items,
-        totales: recalcular(items, state.descuentoPct),
+        totales: recalcular(items, state.descuentoPct, tasaIVA),
       }
     }
 
@@ -82,17 +77,14 @@ function posReducer(state: PosState, action: PosAction): PosState {
       const items = state.items.filter((item) => item.lineId !== action.lineId)
       const removedIndex = state.items.findIndex((item) => item.lineId === action.lineId)
 
-      // Ajustar selectedIndex si el ítem eliminado afecta la selección
       let selectedIndex = state.selectedIndex
       if (selectedIndex !== null) {
         if (items.length === 0) {
           selectedIndex = null
         } else if (removedIndex !== -1 && removedIndex <= selectedIndex) {
-          // El ítem eliminado estaba antes o en la posición seleccionada
           selectedIndex = Math.max(0, selectedIndex - 1)
         }
-        // Asegurar que no exceda el nuevo límite
-        if (selectedIndex >= items.length) {
+        if (selectedIndex !== null && selectedIndex >= items.length) {
           selectedIndex = items.length - 1
         }
       }
@@ -101,7 +93,7 @@ function posReducer(state: PosState, action: PosAction): PosState {
         ...state,
         items,
         selectedIndex,
-        totales: recalcular(items, state.descuentoPct),
+        totales: recalcular(items, state.descuentoPct, tasaIVA),
       }
     }
 
@@ -109,7 +101,6 @@ function posReducer(state: PosState, action: PosAction): PosState {
       if (state.items.length === 0) return state
       const items = state.items.slice(0, -1)
 
-      // Ajustar selectedIndex si apuntaba al último ítem eliminado
       let selectedIndex = state.selectedIndex
       if (selectedIndex !== null) {
         if (items.length === 0) {
@@ -123,7 +114,7 @@ function posReducer(state: PosState, action: PosAction): PosState {
         ...state,
         items,
         selectedIndex,
-        totales: recalcular(items, state.descuentoPct),
+        totales: recalcular(items, state.descuentoPct, tasaIVA),
       }
     }
 
@@ -140,7 +131,7 @@ function posReducer(state: PosState, action: PosAction): PosState {
       return {
         ...state,
         descuentoPct: action.pct,
-        totales: recalcular(state.items, action.pct),
+        totales: recalcular(state.items, action.pct, tasaIVA),
       }
     }
 
@@ -189,13 +180,14 @@ function posReducer(state: PosState, action: PosAction): PosState {
     default:
       return state
   }
-}
+  } // end posReducer
+} // end makeReducer
 
 // ---------------------------------------------------------------------------
-// Hook público
+// Hook público — recibe tasaIVA del ConfigContext (Req-11 11.5)
 // ---------------------------------------------------------------------------
-export function usePOS() {
-  const [state, dispatch] = useReducer(posReducer, initialState)
+export function usePOS(tasaIVA: number = 0.19) {
+  const [state, dispatch] = useReducer(makeReducer(tasaIVA), initialState)
 
   return {
     state,

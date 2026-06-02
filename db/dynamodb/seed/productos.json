@@ -1,0 +1,38 @@
+[
+  {
+    "id": "prod-001",
+    "codigo": "7701234567890",
+    "nombre": "Arroz Diana 1kg",
+    "descripcion": "Arroz blanco premium",
+    "categoria": "Granos",
+    "precio": 4500,
+    "incluye_iva": true,
+    "unidad_medida": "und",
+    "activo": true,
+    "created_at": "2026-05-26T00:00:00.000Z"
+  },
+  {
+    "id": "prod-002",
+    "codigo": "7709876543210",
+    "nombre": "Leche entera 1L",
+    "descripcion": null,
+    "categoria": "Lácteos",
+    "precio": 5200,
+    "incluye_iva": true,
+    "unidad_medida": "und",
+    "activo": true,
+    "created_at": "2026-05-26T00:00:00.000Z"
+  },
+  {
+    "id": "prod-003",
+    "codigo": "FRUT-001",
+    "nombre": "Banano criollo",
+    "descripcion": "Producto a granel",
+    "categoria": "Frutas",
+    "precio": 3200,
+    "incluye_iva": false,
+    "unidad_medida": "kg",
+    "activo": true,
+    "created_at": "2026-05-26T00:00:00.000Z"
+  }
+]

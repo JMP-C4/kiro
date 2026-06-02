@@ -43,11 +43,20 @@ apiClient.interceptors.response.use(
       }
       // GET /reportes → reporte vacío
       if (url.includes('/reportes')) {
-        return { data: { totalVentas: 0, montoTotal: 0, desglosePago: {}, ventas: [] } }
+        return { data: { total_ventas: 0, monto_total: 0, desglose_por_metodo: {}, ventas: [] } }
       }
-      // GET /configuracion → config por defecto
+      // GET /configuracion → config por defecto (formato Lambda snake_case)
       if (url.includes('/configuracion')) {
-        return { data: { nombreNegocio: 'Mi Supermercado', tasaIva: 0.19, formatoPapel: '80mm' } }
+        return {
+          data: {
+            id: 'global',
+            nombre_negocio: 'Mi Supermercado',
+            tasa_iva: 0.19,
+            formato_papel: '80mm',
+            logo_url: null,
+            updated_at: new Date().toISOString(),
+          },
+        }
       }
       // POST /ventas → venta mock
       if (url.includes('/ventas')) {

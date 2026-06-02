@@ -12,15 +12,15 @@ graph TB
         Admin["Panel Admin"]
     end
 
-    subgraph Backend["Backend — Spring Boot 3 + Java 17"]
+    subgraph Backend["Backend — Node.js + AWS Lambda"]
         API["API REST"]
-        Security["Spring Security + JWT"]
-        Services["Services"]
-        Repos["Repositories"]
+        Security["JWT + API Gateway"]
+        Services["Handlers Lambda"]
+        Repos["Repositorios DynamoDB"]
     end
 
     subgraph DB["Base de Datos"]
-        PG["PostgreSQL"]
+        DDB["DynamoDB — documentos JSON"]
     end
 
     Frontend -->|HTTP + JWT| Backend
@@ -38,10 +38,10 @@ graph TB
 | Estilos | Tailwind CSS v4 + Glassmorphism | Estética moderna, utility-first |
 | Estado POS | useReducer | Carrito complejo con múltiples acciones |
 | Atajos teclado | Hook centralizado `useKeyboardShortcuts` | Evita conflictos entre componentes |
-| Backend framework | Spring Boot 3.x | Estándar Java, ecosistema maduro |
-| Seguridad | Spring Security + jjwt | JWT estándar, integración nativa |
-| ORM | Spring Data JPA + Hibernate | Estándar Spring, migraciones Flyway |
-| Base de datos | PostgreSQL | Relacional, robusto, open source |
+| Backend framework | Node.js 20 + AWS Lambda (SAM) | Serverless, alineado con curso |
+| Seguridad | JWT en API Gateway / Lambda | Tokens estándar |
+| Persistencia | AWS DynamoDB | Documentos JSON, tablas no relacionales |
+| Base de datos | DynamoDB | Sin JOINs; ventas con `items[]` embebidos |
 
 ---
 

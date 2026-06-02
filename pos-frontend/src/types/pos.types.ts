@@ -2,15 +2,15 @@ export type MetodoPago = 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA'
 export type ModalType = 'iva' | 'pago' | 'ticket' | 'peso' | 'confirmar-limpiar' | null
 
 export interface CartItem {
-  lineId: string          // nanoid() — unique per line
-  productoId: number
+  lineId: string // nanoid() — unique per line
+  productoId: string
   nombre: string
   codigo: string
-  precio: number          // price as stored (may or may not include IVA)
+  precio: number // price as stored (may or may not include IVA)
   incluye_iva: boolean
-  unidad_medida: string   // 'und' | 'kg' | 'g' | 'lb'
-  cantidad: number        // for weight products: weight in kg/g/lb
-  subtotal: number        // calculated: precio * cantidad (base price)
+  unidad_medida: string // 'und' | 'kg' | 'g' | 'lb'
+  cantidad: number // for weight products: weight in kg/g/lb
+  subtotal: number // calculated: precio * cantidad (base price)
 }
 
 export interface Totales {

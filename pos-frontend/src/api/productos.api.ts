@@ -22,7 +22,13 @@ export async function listarProductos(params?: {
   page?: number
   size?: number
 }): Promise<{ content: Producto[]; totalElements: number; totalPages: number }> {
-  const response = await apiClient.get('/productos', { params })
+  const response = await apiClient.get('/productos', {
+    params: {
+      page: params?.page ?? 0,
+      size: params?.size ?? 50,
+      ...(params?.q ? { q: params.q } : {}),
+    },
+  })
   return response.data
 }
 
@@ -37,14 +43,17 @@ export async function crearProducto(data: Omit<Producto, 'id' | 'activo'>): Prom
 /**
  * PUT /productos/:id — Update an existing product (ADMIN only).
  */
-export async function actualizarProducto(id: number, data: Partial<Omit<Producto, 'id'>>): Promise<Producto> {
-  const response = await apiClient.put<Producto>(`/productos/${id}`, data)
+export async function actualizarProducto(
+  id: string | number,
+  data: Partial<Omit<Producto, 'id'>>
+): Promise<Producto> {
+  const response = await apiClient.put<Producto>(`/productos/${encodeURIComponent(String(id))}`, data)
   return response.data
 }
 
 /**
  * DELETE /productos/:id — Soft-delete a product (ADMIN only).
  */
-export async function desactivarProducto(id: number): Promise<void> {
-  await apiClient.delete(`/productos/${id}`)
+export async function desactivarProducto(id: string | number): Promise<void> {
+  await apiClient.delete(`/productos/${encodeURIComponent(String(id))}`)
 }

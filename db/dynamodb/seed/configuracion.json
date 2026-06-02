@@ -1,0 +1,10 @@
+[
+  {
+    "id": "global",
+    "nombre_negocio": "Mi Supermercado",
+    "tasa_iva": 0.19,
+    "formato_papel": "80mm",
+    "logo_url": null,
+    "updated_at": "2026-05-26T00:00:00.000Z"
+  }
+]

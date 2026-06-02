@@ -1,0 +1,31 @@
+{
+  "name": "serverless-inventory-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API POS serverless — Lambda + API Gateway + DynamoDB (documentos JSON)",
+  "scripts": {
+    "dev": "node --env-file=.env.local src/local-server.mjs",
+    "start:db": "docker rm -f dynamodb-local 2>/dev/null; docker run -d --name dynamodb-local -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb && sleep 2 && echo 'DynamoDB Local listo en :8000'",
+    "stop:db": "docker stop dynamodb-local && docker rm dynamodb-local",
+    "seed": "node scripts/seed.mjs",
+    "seed:local": "DYNAMODB_ENDPOINT=http://127.0.0.1:8000 node scripts/seed.mjs",
+    "seed:aws": "node scripts/seed-aws.mjs",
+    "setup:local": "npm run start:db; sleep 2 && DYNAMODB_ENDPOINT=http://127.0.0.1:8000 bash ../db/dynamodb/create-tables-local.sh && npm run seed:local",
+    "build": "sam build",
+    "deploy": "sam deploy",
+    "deploy:guided": "sam deploy --guided",
+    "test": "node --test src/tests/*.test.mjs",
+    "test:auth": "node --test src/tests/auth.test.mjs",
+    "test:ventas": "node --test src/tests/ventas.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.758.0",
+    "@aws-sdk/lib-dynamodb": "^3.758.0",
+    "bcryptjs": "^3.0.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

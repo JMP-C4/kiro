@@ -1,37 +1,24 @@
 /**
- * calcularTotales.ts
- *
- * Lógica pura de cálculo de IVA y totales del carrito.
- * Función PURA — sin efectos secundarios, sin dependencias React.
- * Principio SRP: solo calcula, no renderiza.
- *
- * Algoritmo:
- *   - Si incluye_iva=true:  precioBase = precio / (1 + tasaIVA)  → desglosar IVA incluido
- *   - Si incluye_iva=false: precioBase = precio                  → agregar IVA encima
- *   - descuentoMonto = subtotalSinIVA * descuentoPct
- *   - baseConDescuento = subtotalSinIVA - descuentoMonto
- *   - montoIVA = baseConDescuento * tasaIVA
- *   - totalConIVA = baseConDescuento + montoIVA
- *
- * Propiedades de corrección:
- *   P-01: Para cualquier ítem con incluye_iva=true,  precioBase = precio / (1 + tasaIVA)
- *   P-02: Para cualquier ítem con incluye_iva=false, montoIVA = precio * tasaIVA * cantidad
- *   P-03: total = (subtotal - descuento) * (1 + tasaIVA)
- *   P-04: cambio = max(0, montoRecibido - total)
+ * calcularTotales.ts — Lógica pura de IVA. Sin dependencias React.
+ * P-01, P-02, P-03, P-04
  */
 
-import type { CartItem, Totales } from '../types/pos.types'
+// Tipo mínimo requerido para el cálculo (subconjunto de CartItem)
+export interface ItemParaCalculo {
+  precio: number
+  cantidad: number
+  incluye_iva: boolean
+}
 
-/**
- * Calcula los totales del carrito aplicando IVA y descuento global.
- *
- * @param items       - Lista de ítems del carrito
- * @param tasaIVA     - Tasa de IVA como decimal, ej: 0.19 para 19%
- * @param descuentoPct - Porcentaje de descuento global como decimal, ej: 0.10 para 10%
- * @returns Totales   - { subtotalSinIVA, montoIVA, totalConIVA, descuentoMonto }
- */
+export interface Totales {
+  subtotalSinIVA: number
+  montoIVA: number
+  totalConIVA: number
+  descuentoMonto: number
+}
+
 export function calcularTotales(
-  items: CartItem[],
+  items: ItemParaCalculo[],
   tasaIVA: number,
   descuentoPct: number
 ): Totales {

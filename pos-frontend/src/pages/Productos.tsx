@@ -53,7 +53,7 @@ export default function Productos() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<Omit<Producto, 'id'>> }) =>
+    mutationFn: ({ id, data }: { id: string; data: Partial<Omit<Producto, 'id'>> }) =>
       actualizarProducto(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['productos'] })

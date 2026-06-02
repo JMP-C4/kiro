@@ -1,17 +1,17 @@
 export interface Producto {
-  id: number
+  id: string
   codigo: string
   nombre: string
   descripcion?: string
   categoria?: string
   precio: number
   incluye_iva: boolean
-  unidad_medida: string  // 'und' | 'kg' | 'g' | 'lb'
+  unidad_medida: string // 'und' | 'kg' | 'g' | 'lb'
   activo: boolean
 }
 
 export interface ProductoSearchResult {
-  id: number
+  id: string
   codigo: string
   nombre: string
   precio: number

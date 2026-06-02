@@ -1,48 +1,363 @@
 @import "tailwindcss";
 
+/* ── Design tokens — Dark (default) ───────────────────────────────────────── */
+:root {
+  --bg-base:     #0f1117;
+  --bg-surface:  #1a1d27;
+  --bg-elevated: #22263a;
+  --bg-hover:    #2a2f47;
+  --border:      #2e3347;
+  --border-light:#3a3f5c;
+
+  --text-primary:   #f0f2f8;
+  --text-secondary: #9ca3c4;
+  --text-muted:     #5c627a;
+
+  --accent:       #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-light: rgba(99, 102, 241, 0.15);
+  --accent-ring:  rgba(99, 102, 241, 0.40);
+
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger:  #ef4444;
+}
+
+/* ── Design tokens — Light ────────────────────────────────────────────────── */
+html.light {
+  --bg-base:     #f4f5f7;
+  --bg-surface:  #ffffff;
+  --bg-elevated: #f0f1f5;
+  --bg-hover:    #e8eaf0;
+  --border:      #e2e4ec;
+  --border-light:#c9ccd8;
+
+  --text-primary:   #111827;
+  --text-secondary: #4b5563;
+  --text-muted:     #9ca3af;
+
+  --accent:       #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-light: rgba(79, 70, 229, 0.10);
+  --accent-ring:  rgba(79, 70, 229, 0.30);
+
+  --success: #059669;
+  --warning: #d97706;
+  --danger:  #dc2626;
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
+html, body, #root {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* ── Layout primitives ─────────────────────────────────────────────────────── */
 @layer components {
-  .glass {
-    background: rgba(255, 255, 255, 0.10);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+  /* Surface — panel principal */
+  .surface {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
   }
 
-  .glass-card {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 1rem;
+  /* Card elevada */
+  .card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
   }
 
-  .glass-input {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.20);
+  .card-hover {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    transition: border-color 0.15s, background-color 0.15s;
+  }
+  .card-hover:hover {
+    border-color: var(--border-light);
+    background-color: var(--bg-elevated);
   }
 
-  .glass-modal {
-    background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+  /* Navbar / header */
+  .navbar {
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 40;
   }
 
-  /* Spinner — loading.html */
+  /* Input */
+  .field {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--text-primary);
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field::placeholder { color: var(--text-muted); }
+  .field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-ring);
+  }
+  .field-error { border-color: var(--danger) !important; }
+
+  /* Botón primario */
+  .btn-primary {
+    background-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    padding: 0.55rem 1.25rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.15s, opacity 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .btn-primary:hover  { background-color: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Botón secundario */
+  .btn-secondary {
+    background-color: var(--bg-elevated);
+    color: var(--text-secondary);
+    font-weight: 500;
+    border-radius: 0.5rem;
+    padding: 0.55rem 1.25rem;
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .btn-secondary:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--accent);
+  }
+
+  /* Botón danger */
+  .btn-danger {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    padding: 0.55rem 1.25rem;
+    border: 1px solid rgba(239, 68, 68, 0.30);
+    cursor: pointer;
+    transition: background-color 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .btn-danger:hover { background-color: rgba(239, 68, 68, 0.25); }
+
+  /* Badge */
+  .badge-success { background: rgba(16,185,129,0.15); color: #6ee7b7; border-radius: 9999px; padding: 0.1rem 0.6rem; font-size: 0.7rem; font-weight: 600; }
+  .badge-warning { background: rgba(245,158,11,0.15); color: #fcd34d; border-radius: 9999px; padding: 0.1rem 0.6rem; font-size: 0.7rem; font-weight: 600; }
+  .badge-danger  { background: rgba(239,68,68,0.15);  color: #fca5a5; border-radius: 9999px; padding: 0.1rem 0.6rem; font-size: 0.7rem; font-weight: 600; }
+  .badge-accent  { background: rgba(99,102,241,0.15); color: #a5b4fc; border-radius: 9999px; padding: 0.1rem 0.6rem; font-size: 0.7rem; font-weight: 600; }
+  .badge-neutral { background: rgba(255,255,255,0.08); color: #9ca3c4; border-radius: 9999px; padding: 0.1rem 0.6rem; font-size: 0.7rem; font-weight: 600; }
+
+  /* kbd — tecla */
+  .key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    padding: 0.1rem 0.35rem;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-bottom-width: 2px;
+    border-radius: 0.3rem;
+    font-family: monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  /* Modal overlay */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    padding: 1rem;
+  }
+
+  /* Modal panel */
+  .modal-panel {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 0.875rem;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    width: 100%;
+    max-width: 32rem;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modal-body   { padding: 1.5rem; overflow-y: auto; flex: 1; }
+  .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; }
+
+  /* Table */
+  .data-table { width: 100%; font-size: 0.875rem; }
+  .data-table thead tr {
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .data-table thead th { padding: 0.75rem 1rem; text-align: left; }
+  .data-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background-color 0.1s;
+  }
+  .data-table tbody tr:hover { background-color: var(--bg-elevated); }
+  .data-table tbody td { padding: 0.75rem 1rem; color: var(--text-secondary); }
+  .data-table tbody td.td-primary { color: var(--text-primary); font-weight: 500; }
+
+  /* Alert */
+  .alert-error   { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; border-radius: 0.5rem; padding: 0.75rem 1rem; font-size: 0.875rem; }
+  .alert-success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; border-radius: 0.5rem; padding: 0.75rem 1rem; font-size: 0.875rem; }
+
+  /* Spinner */
   .spinner {
-    border: 4px dashed rgba(139, 92, 246, 0.8);
+    border: 3px solid var(--border-light);
+    border-top-color: var(--accent);
     border-radius: 9999px;
-    animation: spin 1s linear infinite;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+    flex-shrink: 0;
   }
+
+/* ── Backward compat aliases (componentes existentes usan estas clases) ── */
+    .glass          { background-color: var(--bg-surface); border-bottom: 1px solid var(--border); }
+  .glass-card     { background-color: var(--bg-surface); border: 1px solid var(--border); border-radius: 0.75rem; }
+  .glass-input    { background-color: var(--bg-elevated); border: 1px solid var(--border-light); color: var(--text-primary); }
+  .glass-input::placeholder { color: var(--text-muted); }
+  .glass-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }
+  .glass-modal    { background-color: var(--bg-surface); border: 1px solid var(--border-light); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
 }
 
-/* Estilos de impresión del ticket */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Print styles — Req-12 ─────────────────────────────────────────────────── */
 @media print {
-  body > *:not(#ticket-print) { display: none !important; }
-  #ticket-print { display: block !important; }
+  body * { visibility: hidden !important; }
+  #ticket-print, #ticket-print * { visibility: visible !important; }
+  #ticket-print {
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  #ticket-print button { display: none !important; }
 }
 
-/* Formato 80mm */
-.print-80mm { width: 80mm; font-family: monospace; font-size: 10pt; }
-/* Formato 58mm */
-.print-58mm { width: 58mm; font-family: monospace; font-size: 8pt; }
-/* Formato carta */
-.print-carta { width: 216mm; margin: 2cm; }
+.print-80mm { width: 80mm; font-family: 'Courier New', monospace; font-size: 10pt; line-height: 1.3; }
+.print-58mm { width: 58mm; font-family: 'Courier New', monospace; font-size: 8pt;  line-height: 1.2; }
+.print-carta { width: 216mm; margin: 2cm; font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5; }
+
+/* ── Overrides de Tailwind para tema claro ─────────────────────────────────
+   Tailwind genera clases con colores fijos. En modo light sobreescribimos
+   las más usadas para que el texto y los fondos sean legibles.
+   Esto evita tener que tocar cada componente individualmente.
+─────────────────────────────────────────────────────────────────────────── */
+
+/* Texto — white → --text-primary en light */
+html.light .text-white          { color: var(--text-primary) !important; }
+html.light .text-white\/80      { color: var(--text-secondary) !important; }
+html.light .text-white\/70      { color: var(--text-secondary) !important; }
+html.light .text-white\/60      { color: var(--text-secondary) !important; }
+html.light .text-white\/50      { color: var(--text-muted) !important; }
+html.light .text-white\/40      { color: var(--text-muted) !important; }
+html.light .text-white\/30      { color: var(--text-muted) !important; }
+html.light .text-white\/20      { color: var(--text-muted) !important; }
+
+/* Fondos semitransparentes blancos → usar bg-elevated en light */
+html.light .bg-white\/5         { background-color: var(--bg-elevated) !important; }
+html.light .bg-white\/8         { background-color: var(--bg-elevated) !important; }
+html.light .bg-white\/10        { background-color: var(--bg-elevated) !important; }
+html.light .bg-white\/15        { background-color: var(--bg-elevated) !important; }
+html.light .bg-white\/20        { background-color: var(--bg-hover) !important; }
+html.light .hover\:bg-white\/5:hover  { background-color: var(--bg-elevated) !important; }
+html.light .hover\:bg-white\/10:hover { background-color: var(--bg-hover) !important; }
+html.light .hover\:bg-white\/20:hover { background-color: var(--bg-hover) !important; }
+
+/* Bordes semitransparentes blancos → border token */
+html.light .border-white\/10    { border-color: var(--border) !important; }
+html.light .border-white\/15    { border-color: var(--border) !important; }
+html.light .border-white\/20    { border-color: var(--border-light) !important; }
+html.light .border-white\/25    { border-color: var(--border-light) !important; }
+
+/* Fondo oscuro principal en light */
+html.light .bg-slate-900,
+html.light .from-slate-900,
+html.light .via-purple-900,
+html.light .to-slate-900        { background-color: var(--bg-base) !important; }
+
+/* Placeholder */
+html.light .placeholder-white\/40::placeholder { color: var(--text-muted) !important; }
+
+/* Hover text */
+html.light .hover\:text-white:hover { color: var(--text-primary) !important; }
+
+/* Colores de acento — mantener violeta/índigo en light también */
+html.light .text-violet-400     { color: var(--accent) !important; }
+html.light .text-violet-300     { color: var(--accent) !important; }
+html.light .bg-violet-500\/20   { background-color: var(--accent-light) !important; }
+html.light .bg-violet-500\/10   { background-color: var(--accent-light) !important; }
+html.light .border-violet-500\/30 { border-color: rgba(99,102,241,0.4) !important; }
+html.light .border-violet-400\/70 { border-color: rgba(99,102,241,0.6) !important; }
+html.light .border-violet-500\/70 { border-color: rgba(99,102,241,0.6) !important; }
+
+/* kbd / key en light */
+html.light .key {
+  background-color: var(--bg-elevated) !important;
+  border-color: var(--border-light) !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Gradiente del botón cobrar en light — mantener accent */
+html.light .from-violet-600.to-violet-500 {
+  background: var(--accent) !important;
+}
+
+/* Divisores */
+html.light .divide-white\/5 > * + * { border-color: var(--border) !important; }

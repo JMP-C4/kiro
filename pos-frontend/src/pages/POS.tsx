@@ -20,6 +20,7 @@ import { useNavigate } from 'react-router-dom'
 import { nanoid } from 'nanoid'
 
 import { useAuth } from '../context/AuthContext'
+import { useConfig } from '../context/ConfigContext'
 import { usePOS } from '../hooks/usePOS'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 
@@ -40,7 +41,6 @@ import PaymentModal from '../components/pos/PaymentModal'
 import TicketModal from '../components/pos/TicketModal'
 import ThemeToggle from '../components/ui/ThemeToggle'
 import GlassModal from '../components/ui/GlassModal'
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -66,6 +66,7 @@ function createCartItem(producto: ProductoSearchResult, cantidad: number = 1): C
 export default function POS() {
   const navigate = useNavigate()
   const { nombre, rol, logout } = useAuth()
+  const { config } = useConfig()
 
   const {
     state,
@@ -79,7 +80,7 @@ export default function POS() {
     selectItem,
     moveSelection,
     setModal,
-  } = usePOS()
+  } = usePOS(config.tasa_iva) // Req-11 (11.5) — tasa IVA dinámica desde ConfigContext
 
   // Ref for F1 focus on ProductSearch input
   const searchRef = useRef<HTMLInputElement>(null)
@@ -112,6 +113,8 @@ export default function POS() {
 
   const handleAddItem = (producto: ProductoSearchResult) => {
     addItem(createCartItem(producto))
+    // Auto-seleccionar el ítem recién agregado para que Del funcione de inmediato
+    setTimeout(() => selectItem(state.items.length), 0)
     setErrorMsg(null)
   }
 
@@ -122,6 +125,7 @@ export default function POS() {
 
   const handleWeightConfirm = (producto: ProductoSearchResult, peso: number) => {
     addItem(createCartItem(producto, peso))
+    setTimeout(() => selectItem(state.items.length), 0)
     setPendingWeightProduct(null)
     setModal(null)
     setErrorMsg(null)
@@ -167,16 +171,16 @@ export default function POS() {
     try {
       const request = {
         items: state.items.map((item) => ({
-          productoId: item.productoId,
-          nombreProducto: item.nombre,
+          producto_id: item.productoId,
+          nombre_producto: item.nombre,
           cantidad: item.cantidad,
-          precioUnitario: item.precio,
-          incluyeIva: item.incluye_iva,
+          precio_unitario: item.precio,
+          incluye_iva: item.incluye_iva,
           subtotal: item.subtotal,
         })),
-        descuentoPct: state.descuentoPct,
-        metodoPago: state.metodoPago,
-        montoRecibido: state.metodoPago === 'EFECTIVO' ? state.montoPagado : null,
+        descuento_pct: state.descuentoPct,
+        metodo_pago: state.metodoPago,
+        monto_recibido: state.metodoPago === 'EFECTIVO' ? state.montoPagado : null,
       }
 
       const venta = await crearVenta(request)
@@ -273,8 +277,12 @@ export default function POS() {
         key: 'Delete',
         action: () => {
           if (state.selectedIndex !== null) {
+            // Eliminar ítem seleccionado
             const item = state.items[state.selectedIndex]
             if (item) removeItem(item.lineId)
+          } else if (state.items.length > 0) {
+            // Sin selección → eliminar el último (igual que F2)
+            removeLast()
           }
         },
         description: 'Eliminar ítem seleccionado',
@@ -296,75 +304,70 @@ export default function POS() {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-base)' }}>
 
       {/* ── Top Navbar ─────────────────────────────────────────────────── */}
-      <header className="glass h-14 flex items-center px-4 gap-4 sticky top-0 z-40">
+      <header className="navbar">
         <button
           type="button"
           onClick={() => navigate('/dashboard')}
-          className="text-white/60 hover:text-white transition text-sm shrink-0"
+          className="text-sm mr-1 transition-colors"
+          style={{ color: 'var(--text-muted)' }}
           aria-label="Volver al dashboard"
         >
           ←
         </button>
-        <span className="text-white font-bold text-base shrink-0">POS Supermercado</span>
+        <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
+          POS Supermercado
+        </span>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden px-4">
           <KeyboardShortcutsBar />
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <OverflowMenu open={overflowOpen} onToggle={() => setOverflowOpen((p) => !p)} />
+          <OverflowMenu open={overflowOpen} onToggle={() => setOverflowOpen(p => !p)} />
 
           {nombre && (
             <div className="hidden md:flex flex-col items-end leading-tight">
-              <span className="text-white text-sm font-medium">{nombre}</span>
-              {rol && <span className="text-white/50 text-xs uppercase tracking-wide">{rol}</span>}
+              <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{nombre}</span>
+              {rol && <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{rol}</span>}
             </div>
           )}
 
           <ThemeToggle />
 
           <button
-            type="button"
-            onClick={handleLogout}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg glass hover:bg-red-500/30 transition text-sm font-medium text-white/80 hover:text-white"
+            type="button" onClick={handleLogout}
+            className="btn-secondary text-xs py-1.5 px-3 gap-1"
             title="Cerrar sesión (F9)"
-            aria-label="Cerrar sesión"
           >
-            <kbd className="inline-flex items-center justify-center w-5 h-5 rounded bg-white/15 border border-white/25 font-mono text-[10px] font-semibold leading-none">F9</kbd>
+            <span className="key">F9</span>
             <span className="hidden sm:inline">Salir</span>
           </button>
         </div>
       </header>
 
-      {/* ── Error alert ────────────────────────────────────────────────── */}
+      {/* ── Error alert ─────────────────────────────────────────────────── */}
       {errorMsg && (
         <div
-          role="alert"
-          aria-live="assertive"
-          className="mx-4 mt-3 px-4 py-3 rounded-xl bg-red-500/20 border border-red-500/40 text-red-300 text-sm flex items-center justify-between"
+          role="alert" aria-live="assertive"
+          className="mx-4 mt-3 alert-error flex items-center justify-between"
         >
           <span>⚠ {errorMsg}</span>
-          <button
-            type="button"
-            onClick={() => setErrorMsg(null)}
-            className="ml-4 text-red-300/60 hover:text-red-200 transition"
-            aria-label="Cerrar alerta"
-          >
-            ✕
-          </button>
+          <button type="button" onClick={() => setErrorMsg(null)}
+            className="ml-4 opacity-60 hover:opacity-100 transition-opacity" aria-label="Cerrar">✕</button>
         </div>
       )}
 
-      {/* ── Main Content — 12-column grid ──────────────────────────────── */}
+      {/* ── Main grid ───────────────────────────────────────────────────── */}
       <main className="grid grid-cols-12 gap-4 p-4">
 
-        {/* ── Left column (col-span-3): ProductSearch + shortcuts panel ── */}
+        {/* Left — búsqueda + atajos */}
         <aside className="col-span-12 md:col-span-3 flex flex-col gap-4">
-          <div className="glass-card p-4 flex flex-col gap-3">
-            <h2 className="text-white/60 text-xs font-semibold uppercase tracking-wider">Buscar Producto</h2>
+          <div className="card">
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3"
+              style={{ color: 'var(--text-muted)' }}>Buscar producto</p>
             <ProductSearch
               onAddItem={handleAddItem}
               onWeightRequired={handleWeightRequired}
@@ -372,28 +375,19 @@ export default function POS() {
             />
           </div>
 
-          {/* Lateral shortcuts panel */}
-          <div className="glass-card p-4">
-            <h2 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">Atajos</h2>
-            <ul className="space-y-1.5 text-xs text-white/60">
+          <div className="card">
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3"
+              style={{ color: 'var(--text-muted)' }}>Atajos de teclado</p>
+            <ul className="space-y-1.5">
               {[
-                ['F1', 'Buscar producto'],
-                ['F2', 'Eliminar último'],
-                ['F3', 'Limpiar carrito'],
-                ['F4', 'IVA / Descuento'],
-                ['F5', 'Método de pago'],
-                ['F6', 'Cobrar'],
-                ['F7', 'Imprimir ticket'],
-                ['F8', 'Nueva venta'],
-                ['F9', 'Cerrar sesión'],
-                ['↑↓', 'Navegar carrito'],
-                ['Del', 'Eliminar ítem'],
-                ['Esc', 'Cerrar modal'],
+                ['F1','Buscar producto'], ['F2','Eliminar último'], ['F3','Limpiar carrito'],
+                ['F4','IVA / Descuento'], ['F5','Método de pago'], ['F6','Cobrar'],
+                ['F7','Imprimir ticket'], ['F8','Nueva venta'],    ['F9','Cerrar sesión'],
+                ['↑↓','Navegar carrito'], ['Del','Eliminar ítem'], ['Esc','Cerrar modal'],
               ].map(([key, desc]) => (
-                <li key={key} className="flex items-center gap-2">
-                  <kbd className="inline-flex items-center justify-center min-w-10 px-1.5 py-0.5 rounded bg-white/10 border border-white/20 font-mono text-[10px] font-semibold text-white leading-none">
-                    {key}
-                  </kbd>
+                <li key={key} className="flex items-center gap-2 text-xs"
+                  style={{ color: 'var(--text-secondary)' }}>
+                  <span className="key">{key}</span>
                   <span>{desc}</span>
                 </li>
               ))}
@@ -401,18 +395,17 @@ export default function POS() {
           </div>
         </aside>
 
-        {/* ── Center column (col-span-6): CartList ───────────────────── */}
-        <section
-          className="col-span-12 md:col-span-6 glass-card p-4 flex flex-col gap-3 min-h-96"
-          aria-label="Carrito de compras"
-        >
-          <h2 className="text-white font-semibold text-sm uppercase tracking-wider">
+        {/* Center — carrito */}
+        <section className="col-span-12 md:col-span-6 card min-h-96 flex flex-col gap-3"
+          aria-label="Carrito de compras">
+          <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             Carrito
             {state.items.length > 0 && (
-              <span className="ml-2 text-violet-400 font-normal">({state.items.length} ítem{state.items.length !== 1 ? 's' : ''})</span>
+              <span className="ml-2 font-normal text-xs" style={{ color: 'var(--accent)' }}>
+                {state.items.length} ítem{state.items.length !== 1 ? 's' : ''}
+              </span>
             )}
-          </h2>
-
+          </p>
           <CartList
             items={state.items}
             selectedIndex={state.selectedIndex}
@@ -421,20 +414,19 @@ export default function POS() {
           />
         </section>
 
-        {/* ── Right column (col-span-3): CartSummary ─────────────────── */}
-        <aside className="col-span-12 md:col-span-3 flex flex-col gap-4" aria-label="Resumen de venta">
+        {/* Right — resumen */}
+        <aside className="col-span-12 md:col-span-3 flex flex-col gap-4">
           <CartSummary
             totales={state.totales}
             itemCount={state.items.length}
             metodoPago={state.metodoPago}
             onCobrar={handleCobrar}
           />
-
-          {/* Processing indicator */}
           {isProcessing && (
-            <div className="glass-card p-3 flex items-center justify-center gap-2 text-white/70 text-sm">
-              <span className="spinner w-5 h-5" aria-hidden="true" />
-              Procesando venta…
+            <div className="card flex items-center justify-center gap-2 text-sm"
+              style={{ color: 'var(--text-secondary)' }}>
+              <span className="spinner w-4 h-4" aria-hidden="true" />
+              Procesando…
             </div>
           )}
         </aside>
@@ -474,8 +466,8 @@ export default function POS() {
       <TicketModal
         isOpen={state.activeModal === 'ticket'}
         venta={ventaResult}
-        formatoPapel="80mm"
-        nombreNegocio="Mi Supermercado"
+        formatoPapel={config.formato_papel}
+        nombreNegocio={config.nombre_negocio}
         onNuevaVenta={handleNuevaVenta}
         onClose={() => setModal(null)}
       />
@@ -486,24 +478,16 @@ export default function POS() {
         onClose={() => setModal(null)}
         title="Limpiar carrito"
       >
-        <div className="flex flex-col gap-4">
-          <p className="text-white/80 text-sm">
-            ¿Estás seguro de que quieres vaciar el carrito? Esta acción no se puede deshacer.
+        <div className="flex flex-col gap-5">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            ¿Vaciar el carrito? Esta acción no se puede deshacer.
           </p>
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setModal(null)}
-              className="flex-1 py-2 rounded-lg border border-white/20 text-white/70 hover:text-white hover:bg-white/10 transition"
-            >
-              Cancelar (Esc)
+            <button type="button" onClick={() => setModal(null)} className="btn-secondary flex-1 justify-center">
+              Cancelar
             </button>
-            <button
-              type="button"
-              onClick={() => { clearCart(); setModal(null) }}
-              className="flex-1 py-2 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-500 transition"
-            >
-              Limpiar carrito
+            <button type="button" onClick={() => { clearCart(); setModal(null) }} className="btn-danger flex-1 justify-center">
+              Vaciar carrito
             </button>
           </div>
         </div>

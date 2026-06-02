@@ -5,7 +5,7 @@
 Sistema de Punto de Venta (POS) para supermercado compuesto por dos proyectos independientes:
 
 - **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS v4 con estética glassmorphism.
-- **Backend:** Spring Boot + PostgreSQL con API REST.
+- **Backend:** Node.js + AWS Lambda + DynamoDB (documentos JSON) con API REST.
 
 El sistema permite a cajeros registrar ventas, gestionar el carrito de compras, aplicar IVA, procesar pagos e imprimir tickets. Los supervisores acceden además a reportes. Los administradores tienen control total sobre productos, usuarios y configuración del sistema.
 
@@ -18,7 +18,7 @@ El POS opera principalmente mediante atajos de teclado estándar de supermercado
 - **POS:** Point of Sale — terminal de punto de venta donde el cajero registra las ventas.
 - **Sistema:** El conjunto completo frontend + backend del POS.
 - **Frontend:** Aplicación React que corre en el navegador del cajero.
-- **Backend:** API REST Spring Boot que persiste datos en PostgreSQL.
+- **Backend:** API REST serverless que persiste documentos JSON en DynamoDB (tablas no relacionales).
 - **Cajero:** Usuario con rol `CAJERO` — acceso exclusivo al módulo POS.
 - **Supervisor:** Usuario con rol `SUPERVISOR` — acceso al POS y a reportes y consulta de productos.
 - **Admin:** Usuario con rol `ADMIN` — acceso completo a todos los módulos.
@@ -330,6 +330,6 @@ El POS opera principalmente mediante atajos de teclado estándar de supermercado
 | ID | Descripción |
 |----|-------------|
 | RNF-18 | THE Backend SHALL exponer un endpoint `GET /health` que retorne el estado del servicio para monitoreo. |
-| RNF-19 | THE Backend SHALL usar migraciones de base de datos versionadas (Flyway o Liquibase) para gestionar el esquema de PostgreSQL. |
+| RNF-19 | THE Backend SHALL versionar el esquema de datos mediante archivos JSON seed en `db/dynamodb/seed/` y definición de tablas en SAM (`template.yaml`). |
 | RNF-20 | THE Frontend SHALL separar la lógica de negocio (cálculos de IVA, totales) de los componentes de presentación en módulos independientes. |
 | RNF-21 | THE Backend SHALL retornar mensajes de error estructurados en formato JSON con campos `codigo`, `mensaje` y `detalles` en todas las respuestas de error. |
