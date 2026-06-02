@@ -2,7 +2,7 @@
 
 Sistema de Punto de Venta web para supermercado, construido con enfoque **Spec-Driven Development (SDD)**. Arquitectura cliente-servidor desacoplada: frontend React desplegado en S3 y backend serverless en AWS Lambda + API Gateway + DynamoDB.
 
-**Frontend en producción:** `http://pos-supermarket-frontend.s3-website-us-east-1.amazonaws.com`
+**Frontend en producción:** [http://pos-supermarket-frontend.s3-website-us-east-1.amazonaws.com/pos](http://pos-supermarket-frontend.s3-website-us-east-1.amazonaws.com/pos)
 **API en producción:** `https://6ant23fjfk.execute-api.us-east-1.amazonaws.com`
 
 ---
