@@ -1,292 +1,301 @@
-# POS Supermercado
+# 🛒 POS Supermercado
 
-Sistema de Punto de Venta para supermercado con dos proyectos independientes.
+Sistema de Punto de Venta web para supermercado, construido con enfoque **Spec-Driven Development (SDD)**. Arquitectura cliente-servidor desacoplada: frontend React desplegado en S3 y backend serverless en AWS Lambda + API Gateway + DynamoDB.
 
-| Proyecto | Tecnología | Puerto |
-|---|---|---|
-| `pos-frontend/` | React 18 + TypeScript + Vite + Tailwind v4 | `http://localhost:5173` |
-| `serverless-inventory-api/` | Node.js 20 + AWS Lambda (local) + DynamoDB | `http://localhost:3000` |
+**Frontend en producción:** `http://pos-supermarket-frontend.s3-website-us-east-1.amazonaws.com`
+**API en producción:** `https://6ant23fjfk.execute-api.us-east-1.amazonaws.com`
 
 ---
 
-## Requisitos previos
+## Arquitectura del sistema
 
-- Node.js >= 20
-- [DynamoDB Local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html) corriendo en el puerto `8000`
-- AWS CLI (solo para crear tablas locales)
+```
+Usuario (navegador)
+      │
+      ▼
+React SPA (S3 / localhost:5173)
+      │  HTTP + JWT
+      ▼
+API Gateway (HTTP API)
+      │
+      ├── /auth/login   → Lambda: login.mjs
+      ├── /productos     → Lambda: productos.mjs
+      ├── /ventas        → Lambda: ventas.mjs
+      ├── /usuarios      → Lambda: usuarios.mjs
+      ├── /reportes      → Lambda: reportes.mjs
+      ├── /configuracion → Lambda: configuracion.mjs
+      └── /health        → Lambda: health.mjs
+                │
+                ▼
+           DynamoDB
+     pos-usuarios-prod
+     pos-productos-prod
+     pos-ventas-prod
+     pos-configuracion-prod
+```
 
-### Instalar DynamoDB Local (una sola vez)
+El **frontend** (React) es responsable de la interfaz de usuario, la navegación por teclado, el cálculo de IVA en tiempo real y la presentación de datos. El **backend** (Lambda) es responsable de la autenticación, la autorización por roles, la persistencia en DynamoDB y la validación de negocio. Ninguno de los dos asume responsabilidades del otro.
 
-```bash
-# Opción 1 — Docker (recomendado)
-docker run -d -p 8000:8000 amazon/dynamodb-local
+---
 
-# Opción 2 — JAR directo
-# Descargar desde https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html
-java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb -port 8000
+## Framework elegido: React 18 + TypeScript
+
+**Justificación técnica:**
+
+| Característica | Ventaja en este proyecto |
+|----------------|--------------------------|
+| `useReducer` | El carrito del POS tiene 10+ acciones atómicas — un reducer centraliza el estado sin librerías externas |
+| Hooks (`useState`, `useEffect`) | El ciclo de vida de los modales y búsqueda asíncrona se expresan de forma declarativa |
+| TypeScript | Las interfaces `CartItem`, `Venta`, `Producto` previenen errores en tiempo de compilación antes de llegar a la API |
+| Vite | HMR instantáneo durante desarrollo + build optimizado para S3 |
+| Composición de componentes | El POS se divide en `ProductSearch`, `CartList`, `CartSummary`, modales — cada uno con responsabilidad única |
+
+---
+
+## Capturas de pantalla
+
+### Login
+![Login](docs/screenshots/login.png)
+
+### Punto de Venta (POS)
+![POS](docs/screenshots/POS.png)
+
+### Listado de productos cargado desde el API
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Modal de pago
+![Payment](docs/screenshots/payment.png)
+
+### Registro de venta exitosa — ticket generado
+![Ticket](docs/screenshots/ticket.png)
+
+### Módulo de reportes
+![Reports](docs/screenshots/reports.png)
+
+### Manejo de error
+![Error](docs/screenshots/error.png)
+
+---
+
+## Proceso SDD — Cómo los specs guiaron la implementación
+
+Este proyecto siguió el enfoque **Spec-Driven Development**: los documentos de especificación se escribieron **antes** de cualquier línea de código y sirvieron como contrato durante toda la implementación.
+
+### 1. `requirements.md` — El "qué"
+Definimos 12 requisitos funcionales con criterios de aceptación en formato estructurado (`THE system SHALL...`). Ejemplo del Requisito 2:
+
+> *"WHEN el cajero presiona Enter sobre un producto, THE Frontend SHALL agregar una nueva línea individual al Carrito sin acumular en líneas existentes."*
+
+Este criterio derivó directamente en la acción `ADD_ITEM` del reducer, que usa `nanoid()` para garantizar una línea nueva siempre — nunca acumula.
+
+### 2. `design.md` — El "cómo"
+Antes de crear ningún componente, diseñamos:
+- El árbol de componentes del POS (`POSPage → CartList → CartItem[]`)
+- La firma de `calcularTotales(items, tasaIVA, descuentoPct): Totales` como función pura
+- La tabla de atajos de teclado y el contrato del hook `useKeyboardShortcuts`
+- El esquema de tablas DynamoDB con sus GSIs
+
+El diseño previo evitó refactorizaciones costosas: el layout de 12 columnas y la separación de responsabilidades entre componentes se respetó desde el inicio.
+
+### 3. `tasks.md` — El "cuándo"
+Las tareas se organizaron en 8 fases progresivas (setup → auth → backend core → UI base → POS → modales → admin → testing). Cada tarea referencia el requisito que satisface. Esto permitió verificar cobertura: si una tarea no referenciaba ningún requisito, se eliminaba; si un requisito no tenía tarea, se agregaba.
+
+### Resultado
+Los specs funcionaron como documentación viva: cuando el comportamiento del carrito fue ambiguo durante el desarrollo, la respuesta siempre estuvo en el `requirements.md`, no en suposiciones.
+
+---
+
+## Estructura del repositorio
+
+```
+├── .kiro/
+│   └── specs/
+│       ├── supermarket-pos/          # Specs en español
+│       │   ├── requirements.md
+│       │   ├── design.md
+│       │   └── tasks.md
+│       └── supermarket-pos-en/       # Specs en inglés
+│           ├── requirements.md
+│           ├── design.md
+│           └── tasks.md
+├── pos-frontend/                     # React 18 + TypeScript + Vite
+│   ├── src/
+│   │   ├── api/                      # Clientes HTTP por módulo
+│   │   ├── components/               # Componentes UI
+│   │   │   ├── pos/                  # Componentes del POS
+│   │   │   ├── ui/                   # GlassCard, GlassModal, etc.
+│   │   │   └── layout/               # ProtectedRoute
+│   │   ├── context/                  # AuthContext, ConfigContext
+│   │   ├── hooks/                    # usePOS, useKeyboardShortcuts
+│   │   ├── lib/                      # calcularTotales (lógica pura)
+│   │   ├── pages/                    # Login, POS, Productos, etc.
+│   │   └── types/                    # Interfaces TypeScript
+│   ├── .env                          # VITE_API_URL (desarrollo)
+│   └── .env.production               # VITE_API_URL (producción AWS)
+├── serverless-inventory-api/         # Node.js 20 + AWS SAM
+│   ├── src/
+│   │   ├── handlers/                 # Funciones Lambda
+│   │   ├── lib/                      # auth, dynamo, jwt, http
+│   │   └── tests/                    # Tests unitarios
+│   ├── scripts/                      # seed.mjs, seed-aws.mjs
+│   └── template.yaml                 # Infraestructura SAM
+├── db/
+│   └── dynamodb/seed/                # Datos de prueba JSON
+├── docs/
+│   └── screenshots/                  # Capturas del sistema
+└── README.md
 ```
 
 ---
 
-## Backend — `serverless-inventory-api/`
+## Ejecutar localmente
+
+### Prerrequisitos
+- Node.js >= 20
+- Docker (para DynamoDB Local)
+
+### 1. Clonar el repositorio
+
+```bash
+git clone <url-del-repo>
+cd <nombre-del-repo>
+```
+
+### 2. Backend
 
 ```bash
 cd serverless-inventory-api
 npm install
-```
 
-### Primera vez — crear tablas y cargar datos de prueba
-
-```bash
+# Primera vez: levantar DynamoDB Local, crear tablas y cargar datos
 npm run setup:local
-```
 
-Esto ejecuta dos pasos:
-1. `create-tables-local.sh` — crea las 4 tablas en DynamoDB Local
-2. `seed:local` — carga usuarios, productos y configuración de prueba
-
-### Iniciar el servidor local
-
-```bash
+# Iniciar servidor (emula API Gateway en :3000)
 npm run dev
 ```
 
-El servidor corre en `http://localhost:3000` y emula API Gateway + Lambda.
-
-### Usuarios de prueba (cargados por el seed)
-
-| Usuario | Contraseña | Rol |
-|---|---|---|
-| `admin` | `admin123` | ADMIN |
-| `supervisor` | `supervisor123` | SUPERVISOR |
-| `cajero` | `cajero123` | CAJERO |
-
-### Scripts disponibles
-
-```bash
-npm run dev          # Servidor local en :3000
-npm run setup:local  # Crear tablas + cargar seed (primera vez)
-npm run seed:local   # Solo recargar datos de prueba
-npm run test         # Todos los tests
-npm run test:auth    # Tests de autenticación y autorización
-npm run test:ventas  # Tests de ventas e IVA
-```
-
-### Endpoints
-
-| Método | Ruta | Rol mínimo |
-|---|---|---|
-| `GET` | `/health` | Público |
-| `POST` | `/auth/login` | Público |
-| `GET` | `/productos?q=texto` | CAJERO |
-| `GET` | `/productos?page=0&size=50` | CAJERO |
-| `POST` | `/productos` | ADMIN |
-| `PUT` | `/productos/:id` | ADMIN |
-| `DELETE` | `/productos/:id` | ADMIN |
-| `POST` | `/ventas` | CAJERO |
-| `GET` | `/ventas/:id` | CAJERO |
-| `GET` | `/usuarios` | ADMIN |
-| `POST` | `/usuarios` | ADMIN |
-| `PUT` | `/usuarios/:username` | ADMIN |
-| `DELETE` | `/usuarios/:username` | ADMIN |
-| `GET` | `/reportes/ventas?desde=YYYY-MM-DD&hasta=YYYY-MM-DD` | SUPERVISOR |
-| `GET` | `/configuracion` | CAJERO |
-| `PUT` | `/configuracion` | ADMIN |
-
----
-
-## Frontend — `pos-frontend/`
+### 3. Frontend
 
 ```bash
 cd pos-frontend
 npm install
+npm run dev
+# App disponible en http://localhost:5173
 ```
 
-### Configurar la URL del backend
+### 4. Configurar la URL del API
 
-El archivo `.env` ya existe con:
+El archivo `pos-frontend/.env` contiene:
 
-```
+```env
 VITE_API_URL=http://localhost:3000
 ```
 
-Cámbialo si el backend corre en otro puerto o en AWS.
+Para apuntar a la API en AWS, edita `.env.production`:
 
-### Iniciar el servidor de desarrollo
-
-```bash
-npm run dev
+```env
+VITE_API_URL=https://6ant23fjfk.execute-api.us-east-1.amazonaws.com
 ```
 
-La app corre en `http://localhost:5173`.
+> La URL nunca está hardcodeada en el código — siempre se lee de `import.meta.env.VITE_API_URL` a través del cliente Axios centralizado en `src/api/client.ts`.
 
-### Scripts disponibles
+### Usuarios de prueba (desarrollo local)
 
-```bash
-npm run dev      # Servidor de desarrollo en :5173
-npm run build    # Build de producción
-npm run test     # Todos los tests unitarios
-npm run lint     # Linter ESLint
-```
+| Usuario | Contraseña | Rol |
+|---------|-----------|-----|
+| `admin` | `admin123` | ADMIN |
+| `supervisor` | `supervisor123` | SUPERVISOR |
+| `cajero` | `cajero123` | CAJERO |
 
-### Atajos de teclado del POS
+---
+
+## Atajos de teclado del POS
 
 | Tecla | Acción |
-|---|---|
+|-------|--------|
 | `F1` | Foco al buscador de productos |
 | `F2` | Eliminar último ítem del carrito |
 | `F3` | Limpiar carrito (pide confirmación) |
 | `F4` | Abrir modal IVA / Descuento |
 | `F5` | Abrir modal Método de Pago |
-| `F6` | Procesar venta (cobrar) |
+| `F6` | Procesar venta |
 | `F7` | Imprimir ticket |
 | `F8` | Nueva venta |
 | `F9` | Cerrar sesión |
-| `M` | Menú de desbordamiento |
+| `M` | Menú de opciones adicionales |
 | `↑ ↓` | Navegar ítems del carrito |
 | `Del` | Eliminar ítem seleccionado |
 | `Esc` | Cerrar modal activo |
 
 ---
 
-## Flujo completo de prueba
+## Despliegue en AWS
 
-1. Iniciar DynamoDB Local
-2. `cd serverless-inventory-api && npm run setup:local` (primera vez)
-3. `npm run dev` (backend en :3000)
-4. `cd pos-frontend && npm run dev` (frontend en :5173)
-5. Abrir `http://localhost:5173`
-6. Login con `cajero` / `cajero123`
-7. Buscar producto con F1 → escanear código de barras o escribir nombre
-8. Agregar al carrito → F5 (método de pago) → F6 (cobrar) → F7 (imprimir)
+### Backend (AWS SAM)
+
+```bash
+cd serverless-inventory-api
+sam build
+sam deploy --config-file samconfig.toml
+```
+
+SAM despliega automáticamente: API Gateway + 7 Lambdas + 4 tablas DynamoDB + roles IAM.
+
+Cargar datos iniciales en AWS:
+
+```bash
+STAGE=prod npm run seed:aws
+```
+
+### Frontend (S3)
+
+```bash
+cd pos-frontend
+npm run build
+aws s3 sync dist/ s3://pos-supermarket-frontend --delete
+aws s3 website s3://pos-supermarket-frontend \
+  --index-document index.html \
+  --error-document index.html
+```
 
 ---
 
 ## Tests
 
-### Frontend (37 tests)
-
 ```bash
-cd pos-frontend
-npm test
+# Frontend (37 tests — IVA, carrito, atajos)
+cd pos-frontend && npm test
+
+# Backend (31 tests — auth, autorización por rol, ventas)
+cd serverless-inventory-api && npm test
 ```
-
-Cubre: P-01 P-02 P-03 P-04 (IVA), P-05 (carrito), P-11 RNF-13 (atajos).
-
-### Backend (31 tests)
-
-```bash
-cd serverless-inventory-api
-npm test
-```
-
-Cubre: P-06 (autorización), P-07 (password), P-08 (numero_venta), P-10 (JWT), P-12 (ticket).
 
 ---
 
-## Despliegue en AWS
+## Fundamentos técnicos aplicados
 
-### Prerrequisitos
+### HTML5 semántico
+Los componentes React generan markup semántico: `<header>`, `<main>`, `<section>`, `<ul>/<li>` para el carrito, `<fieldset>/<label>` para el buscador, `<button>` con `aria-label` para acciones.
 
-- [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html) instalado
-- Credenciales AWS configuradas (`aws configure`)
-- Una cuenta AWS con permisos para Lambda, API Gateway, DynamoDB, IAM, S3 y CloudFormation
+### CSS — Flexbox y Grid
+El layout del POS usa CSS Grid de 12 columnas (`grid-cols-12`). Los componentes internos usan Flexbox (`flex items-start justify-between`). Los estilos glassmorphism están definidos como clases reutilizables en `index.css` con `backdrop-filter`, `background rgba` y `border`.
 
-### Paso 1 — Editar `samconfig.toml`
+### JavaScript asíncrono
+Todas las llamadas al API usan `async/await` con `try/catch`:
 
-```toml
-# serverless-inventory-api/samconfig.toml
-parameter_overrides = [
-  "Stage=prod",
-  "JwtSecret=TU_SECRETO_SEGURO_MIN_32_CARACTERES",
-  "AllowedOrigin=https://TU_DOMINIO_FRONTEND.com"
-]
-region = "us-east-1"   # tu región
-```
+```javascript
+// src/api/client.ts — instancia Axios centralizada
+const client = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+})
 
-### Paso 2 — Build y deploy del backend
-
-```bash
-cd serverless-inventory-api
-
-# Primera vez (te pide S3 bucket, región, etc.)
-npm run deploy:guided
-
-# Despliegues posteriores
-npm run build
-npm run deploy
-```
-
-SAM crea automáticamente:
-- 6 funciones Lambda (health, login, productos, usuarios, ventas, reportes, configuracion)
-- 1 API Gateway HTTP API con CORS configurado
-- 4 tablas DynamoDB con sus GSIs
-- Roles IAM con permisos mínimos por función
-
-Al finalizar verás en los Outputs:
-```
-ApiUrl = https://XXXXXXXXXX.execute-api.us-east-1.amazonaws.com
-```
-
-### Paso 3 — Cargar datos iniciales en AWS
-
-```bash
-AWS_REGION=us-east-1 STAGE=prod npm run seed:aws
-```
-
-Usuarios creados (cambia las contraseñas después del primer login):
-
-| Usuario | Contraseña inicial | Rol |
-|---|---|---|
-| `admin` | `Admin2024!` | ADMIN |
-| `supervisor` | `Super2024!` | SUPERVISOR |
-| `cajero` | `Cajero2024!` | CAJERO |
-
-### Paso 4 — Build y deploy del frontend
-
-```bash
-cd pos-frontend
-
-# Crear .env.production con la URL real del API Gateway
-echo "VITE_API_URL=https://XXXXXXXXXX.execute-api.us-east-1.amazonaws.com" > .env.production
-
-# Build
-npm run build
-# Los archivos quedan en dist/
-```
-
-**Opción A — S3 + CloudFront (recomendado)**
-
-```bash
-# Crear bucket y subir archivos
-aws s3 mb s3://pos-frontend-prod
-aws s3 sync dist/ s3://pos-frontend-prod --delete
-aws s3 website s3://pos-frontend-prod --index-document index.html --error-document index.html
-```
-
-**Opción B — Amplify Hosting**
-
-```bash
-# En la consola de AWS Amplify → "Host web app" → conectar repositorio
-# o con CLI:
-amplify init
-amplify add hosting
-amplify publish
-```
-
-### Flujo de URLs en producción
-
-```
-Usuario → CloudFront/Amplify (frontend) → API Gateway → Lambda → DynamoDB
-         https://tu-app.com              https://xxx.execute-api.region.amazonaws.com
-```
-
-Actualizar CORS en `samconfig.toml`:
-```
-"AllowedOrigin=https://tu-app.com"
-```
-
-y re-deployar:
-```bash
-npm run deploy
+// src/api/productos.api.ts
+export async function buscarProductos(q: string) {
+  try {
+    const { data } = await client.get(`/productos?q=${q}`)
+    return data
+  } catch (error) {
+    throw new Error('Error al buscar productos')
+  }
+}
 ```
