@@ -8,6 +8,7 @@ import Productos from './pages/Productos'
 import Usuarios from './pages/Usuarios'
 import Reportes from './pages/Reportes'
 import Configuracion from './pages/Configuracion'
+import TicketPreviewDemo from './pages/TicketPreviewDemo'
 
 /**
  * Public-only wrapper: if the user is already authenticated, redirect to /dashboard.
@@ -31,6 +32,7 @@ export default function App() {
             </PublicRoute>
           }
         />
+        <Route path="/preview/ticket" element={<TicketPreviewDemo />} />
 
         {/* Protected routes — any authenticated user */}
         <Route element={<ProtectedRoute />}>

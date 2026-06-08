@@ -1,0 +1,45 @@
+import type { VentaResponse } from '../../types/venta.types'
+
+export const sampleVenta: VentaResponse = {
+  id: 'venta-demo-001',
+  numero_venta: 'VTA-20260608-0042',
+  cajero_nombre: 'Juan Parada',
+  subtotal_sin_iva: 21176.47,
+  descuento_pct: 0.05,
+  descuento_monto: 1058.82,
+  iva_monto: 3822.35,
+  total_con_iva: 23940,
+  metodo_pago: 'EFECTIVO',
+  monto_recibido: 30000,
+  cambio: 6060,
+  created_at: '2026-06-08T15:30:00.000Z',
+  items: [
+    {
+      idx: 1,
+      producto_id: 'prod-001',
+      nombre_producto: 'Arroz Diana 1kg',
+      cantidad: 2,
+      precio_unitario: 4500,
+      incluye_iva: true,
+      subtotal: 9000,
+    },
+    {
+      idx: 2,
+      producto_id: 'prod-002',
+      nombre_producto: 'Leche Entera 1L',
+      cantidad: 3,
+      precio_unitario: 3500,
+      incluye_iva: false,
+      subtotal: 10500,
+    },
+    {
+      idx: 3,
+      producto_id: 'prod-003',
+      nombre_producto: 'Banano',
+      cantidad: 1.2,
+      precio_unitario: 1225,
+      incluye_iva: false,
+      subtotal: 1470,
+    },
+  ],
+}

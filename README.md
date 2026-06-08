@@ -272,6 +272,16 @@ cd serverless-inventory-api && npm test
 
 ---
 
+## Evaluación técnica — Hallazgos
+
+Como evaluación honesta del estado actual del proyecto:
+
+- `npm run lint` sigue fallando por deuda técnica real en React/ESLint, sobre todo en `useKeyboardShortcuts.ts` (línea 38), `IVAModal.tsx` (línea 31), `PaymentModal.tsx` (línea 42) y `ConfigContext.tsx` (línea 46). No rompe el MVP, pero sí le baja puntos de portafolio.
+- El frontend compila bien, pero el bundle final quedó en aproximadamente `504 kB`, así que todavía hay espacio para pulir performance antes de venderlo como un proyecto “muy sólido”.
+- Hay detalles de tooling todavía verdes: una regla `jsx-a11y` faltante y warnings de Fast Refresh/React Compiler. Eso da sensación de proyecto bueno, pero no totalmente rematado.
+
+---
+
 ## Fundamentos técnicos aplicados
 
 ### HTML5 semántico

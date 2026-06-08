@@ -38,9 +38,9 @@ import CartSummary from '../components/pos/CartSummary'
 import WeightModal from '../components/pos/WeightModal'
 import IVAModal from '../components/pos/IVAModal'
 import PaymentModal from '../components/pos/PaymentModal'
-import TicketModal from '../components/pos/TicketModal'
 import ThemeToggle from '../components/ui/ThemeToggle'
 import GlassModal from '../components/ui/GlassModal'
+import { TicketPreviewModal } from '../features/ticket-preview'
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -463,7 +463,7 @@ export default function POS() {
       />
 
       {/* Ticket modal (F7) */}
-      <TicketModal
+      <TicketPreviewModal
         isOpen={state.activeModal === 'ticket'}
         venta={ventaResult}
         formatoPapel={config.formato_papel}
